@@ -110,13 +110,13 @@ function handleYouTubeMessage(username, message) {
     };
     broadcastState();
 
-    // Clear moderator message after 10 seconds
+    // Clear moderator message after 15 seconds
     setTimeout(() => {
       if (debateState.moderatorMessage?.timestamp === filterResult.timestamp) {
         debateState.moderatorMessage = null;
         broadcastState();
       }
-    }, 10000);
+    }, 15000);
     return;
   }
 
