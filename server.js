@@ -387,9 +387,12 @@ async function debateLoop() {
   console.log('Ollama response received:', response ? 'success' : 'failed');
 
   if (response) {
+    // Remove markdown asterisks for emphasis
+    const cleanedResponse = response.replace(/\*\*/g, '').replace(/\*/g, '');
+
     debateState.history.push({
       side: debateState.currentSide,
-      text: response,
+      text: cleanedResponse,
       turn: debateState.turnNumber,
       timestamp: Date.now(),
       isNew: true  // Mark as new for typewriter effect
