@@ -344,7 +344,10 @@ function updateArguments(history) {
 
       proContainer.appendChild(argBox);
     });
-    proContainer.scrollTop = proContainer.scrollHeight;
+    // Force scroll after DOM update
+    setTimeout(() => {
+      proContainer.scrollTop = proContainer.scrollHeight;
+    }, 100);
   }
 
   // Update CON arguments
@@ -363,7 +366,10 @@ function updateArguments(history) {
 
       conContainer.appendChild(argBox);
     });
-    conContainer.scrollTop = conContainer.scrollHeight;
+    // Force scroll after DOM update
+    setTimeout(() => {
+      conContainer.scrollTop = conContainer.scrollHeight;
+    }, 100);
   }
 }
 
