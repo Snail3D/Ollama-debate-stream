@@ -280,11 +280,13 @@ function updateChatMessages(messages) {
       msgEl.appendChild(usernameEl);
       msgEl.appendChild(textEl);
       chatContainer.appendChild(msgEl);
-
-      // Auto-scroll to bottom
-      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
   });
+
+  // Auto-scroll to bottom after all messages added
+  setTimeout(() => {
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }, 100);
 }
 
 function updateModeratorMessage(message) {
