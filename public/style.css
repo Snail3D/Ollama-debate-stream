@@ -15,6 +15,89 @@ body {
   overflow: hidden;
 }
 
+/* TV Glitch Effect */
+@keyframes tv-glitch {
+  0% {
+    transform: translate(0);
+    filter: brightness(1) contrast(1);
+  }
+  5% {
+    transform: translate(-5px, 3px) skew(2deg);
+    filter: brightness(2) contrast(2.5) hue-rotate(90deg);
+  }
+  10% {
+    transform: translate(4px, -2px) skew(-1deg);
+    filter: brightness(0.5) contrast(3);
+  }
+  15% {
+    transform: translate(-3px, 4px);
+    filter: brightness(1.8) contrast(2) saturate(3);
+  }
+  20% {
+    transform: translate(2px, -3px) skew(1deg);
+    filter: brightness(0.7) contrast(2.5);
+  }
+  25% {
+    transform: translate(0);
+    filter: brightness(1) contrast(1);
+  }
+  100% {
+    transform: translate(0);
+    filter: brightness(1) contrast(1);
+  }
+}
+
+@keyframes scanlines {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+body.glitching {
+  animation: tv-glitch 0.5s ease-in-out;
+}
+
+body.glitching::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.2) 0px,
+    transparent 2px,
+    transparent 4px,
+    rgba(0, 0, 0, 0.4) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+  animation: scanlines 0.15s linear infinite;
+}
+
+body.glitching::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 0, 0, 0.2) 33%,
+    rgba(0, 255, 0, 0.2) 66%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: screen;
+}
+
 .container {
   max-width: 100vw;
   height: 100vh;
@@ -172,10 +255,12 @@ body {
 .debate-side.con-side {
   border-right: 1px solid #ff0000;
   color: #ff0000;
+  text-shadow: 0 0 15px #ff0000;
 }
 
 .debate-side.pro-side {
   border-left: 1px solid #00ff00;
+  text-shadow: 0 0 15px #00ff00;
 }
 
 /* Center Column */
@@ -285,6 +370,44 @@ body {
   color: #ffff00;
 }
 
+.chat-message {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 2px solid #ffff00;
+  word-wrap: break-word;
+  line-height: 1.4;
+  font-size: 1.1875em;
+}
+
+.chat-username {
+  color: #ffff00;
+  font-weight: bold;
+  text-shadow: 0 0 15px #ffff00;
+}
+
+.chat-text {
+  color: #ffff00;
+  font-weight: bold;
+  text-shadow: 0 0 15px #ffff00;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #ffff00;
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #cccc00;
+}
+
 .side-header {
   position: sticky;
   top: 0;
@@ -349,8 +472,9 @@ body {
 }
 
 .argument-text {
-  font-size: 1.1em;
+  font-size: 1.375em;
   line-height: 1.6;
+  font-weight: bold;
   white-space: pre-wrap;
   word-wrap: break-word;
 }
@@ -599,52 +723,20 @@ body {
   font-size: 0.9em;
 }
 
-.topic-submission {
+.youtube-instructions {
   flex: 1;
   display: flex;
-  gap: 10px;
+  justify-content: center;
   align-items: center;
 }
 
-#topicInput {
-  flex: 1;
-  padding: 10px 15px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 2px solid #00ff00;
-  color: #00ff00;
-  font-family: 'Courier New', monospace;
-  font-size: 1em;
-  outline: none;
-}
-
-#topicInput::placeholder {
-  color: #00ff0066;
-}
-
-#topicInput:focus {
-  border-color: #00ff00;
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
-}
-
-#submitTopicBtn {
-  padding: 10px 20px;
-  background: #00ff00;
-  color: #000;
-  border: none;
-  font-family: 'Courier New', monospace;
+.instructions-text {
+  font-size: 2em;
   font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-#submitTopicBtn:hover {
-  background: #00cc00;
-  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
-}
-
-#submitFeedback {
-  font-size: 0.9em;
-  min-width: 150px;
+  color: #00ff00;
+  text-shadow: 0 0 15px #00ff00;
+  letter-spacing: 0.1em;
+  text-align: center;
 }
 
 .connection-status {

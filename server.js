@@ -53,7 +53,8 @@ let debateState = {
   mode: 'auto', // 'auto' or 'user'
   queue: [],
   isProcessing: false,
-  moderatorMessage: null
+  moderatorMessage: null,
+  chatMessages: [] // YouTube chat messages
 };
 
 // Content filter
@@ -68,11 +69,30 @@ const topicGenerator = new TopicGenerator();
 import { YouTubeChatMonitor } from './youtubeChatMonitor.js';
 let youtubeChatMonitor = null;
 
+// Handle all YouTube chat messages for display
+function handleChatMessage(username, text) {
+  console.log(`Chat message from ${username}: ${text}`);
+  debateState.chatMessages.push({
+    username,
+    text,
+    timestamp: Date.now()
+  });
+
+  // Keep only last 50 messages
+  if (debateState.chatMessages.length > 50) {
+    debateState.chatMessages = debateState.chatMessages.slice(-50);
+  }
+
+  console.log(`Total chat messages: ${debateState.chatMessages.length}`);
+  broadcastState();
+}
+
 if (config.youtubeApiKey && config.youtubeVideoId) {
   youtubeChatMonitor = new YouTubeChatMonitor(
     config.youtubeApiKey,
     config.youtubeVideoId,
-    handleYouTubeMessage
+    handleYouTubeMessage,
+    handleChatMessage
   );
 }
 
@@ -341,8 +361,10 @@ async function debateLoop() {
 
     // Clear moderator message after 5 seconds
     setTimeout(() => {
+      console.log('Clearing moderator message...');
       debateState.moderatorMessage = null;
       broadcastState();
+      console.log('Moderator message cleared');
     }, 5000);
 
     // Small pause before first argument
@@ -428,7 +450,8 @@ function broadcastState() {
     history: debateState.history, // Keep isNew flags for typewriter effect
     mode: debateState.mode,
     queueLength: debateState.queue.length,
-    moderatorMessage: debateState.moderatorMessage
+    moderatorMessage: debateState.moderatorMessage,
+    chatMessages: debateState.chatMessages
   };
 
   broadcastToAll(state);
@@ -446,7 +469,8 @@ wss.on('connection', (ws) => {
     history: debateState.history.map(h => ({ ...h, isNew: false })),
     mode: debateState.mode,
     queueLength: debateState.queue.length,
-    moderatorMessage: debateState.moderatorMessage
+    moderatorMessage: debateState.moderatorMessage,
+    chatMessages: debateState.chatMessages
   }));
 
   ws.on('close', () => {

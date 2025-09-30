@@ -1,10 +1,11 @@
 import axios from 'axios';
 
 export class YouTubeChatMonitor {
-  constructor(apiKey, videoId, messageCallback) {
+  constructor(apiKey, videoId, messageCallback, chatCallback) {
     this.apiKey = apiKey;
     this.videoId = videoId;
     this.messageCallback = messageCallback;
+    this.chatCallback = chatCallback; // For all chat messages
     this.liveChatId = null;
     this.nextPageToken = null;
     this.isRunning = false;
@@ -77,6 +78,11 @@ export class YouTubeChatMonitor {
 
         const username = message.authorDetails.displayName;
         const text = message.snippet.displayMessage;
+
+        // Send all messages to chat display callback
+        if (this.chatCallback) {
+          this.chatCallback(username, text);
+        }
 
         // Check if message starts with !debate or similar trigger
         if (text.toLowerCase().startsWith('!debate ')) {

@@ -206,10 +206,60 @@ function updateUI(state) {
   // Update turn counter in header
   document.getElementById('turnNumberHeader').textContent = state.turnNumber;
 
+  // Update chat messages
+  if (state.chatMessages) {
+    updateChatMessages(state.chatMessages);
+  }
+
   // Update arguments (only if not streaming)
   if (!currentStreamingSide) {
     updateArguments(state.history);
   }
+}
+
+function updateChatMessages(messages) {
+  console.log('Updating chat messages:', messages ? messages.length : 0, 'messages');
+  const chatContainer = document.getElementById('chatMessages');
+
+  if (!chatContainer) {
+    console.error('Chat container not found!');
+    return;
+  }
+
+  // Clear placeholder if exists
+  const placeholder = chatContainer.querySelector('.chat-placeholder');
+  if (placeholder && messages && messages.length > 0) {
+    placeholder.remove();
+  }
+
+  // Add new messages
+  const existingMessages = new Set(
+    Array.from(chatContainer.querySelectorAll('.chat-message'))
+      .map(el => el.dataset.timestamp)
+  );
+
+  messages.forEach(msg => {
+    if (!existingMessages.has(String(msg.timestamp))) {
+      const msgEl = document.createElement('div');
+      msgEl.className = 'chat-message';
+      msgEl.dataset.timestamp = msg.timestamp;
+
+      const usernameEl = document.createElement('span');
+      usernameEl.className = 'chat-username';
+      usernameEl.textContent = msg.username + ': ';
+
+      const textEl = document.createElement('span');
+      textEl.className = 'chat-text';
+      textEl.textContent = msg.text;
+
+      msgEl.appendChild(usernameEl);
+      msgEl.appendChild(textEl);
+      chatContainer.appendChild(msgEl);
+
+      // Auto-scroll to bottom
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  });
 }
 
 function updateModeratorMessage(message) {
@@ -320,51 +370,28 @@ function typewriterEffect(element, text) {
   }, 82); // 82ms per character for readable typing
 }
 
-// Topic submission handler
-document.getElementById('submitTopicBtn').addEventListener('click', submitTopic);
-document.getElementById('topicInput').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    submitTopic();
-  }
-});
-
-async function submitTopic() {
-  const input = document.getElementById('topicInput');
-  const feedback = document.getElementById('submitFeedback');
-  const topic = input.value.trim();
-
-  if (!topic) {
-    feedback.textContent = '❌ Enter a topic';
-    feedback.style.color = '#ff0000';
-    return;
-  }
-
-  try {
-    const response = await fetch('/api/submit-topic', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'Web User', message: topic })
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      feedback.textContent = '✓ Topic queued!';
-      feedback.style.color = '#00ff00';
-      input.value = '';
-
-      setTimeout(() => {
-        feedback.textContent = '';
-      }, 3000);
-    } else {
-      feedback.textContent = '❌ ' + (data.reason || 'Failed');
-      feedback.style.color = '#ff0000';
-    }
-  } catch (error) {
-    feedback.textContent = '❌ Connection error';
-    feedback.style.color = '#ff0000';
-  }
+// TV Glitch effect
+function triggerGlitch() {
+  document.body.classList.add('glitching');
+  setTimeout(() => {
+    document.body.classList.remove('glitching');
+  }, 500);
 }
+
+// Trigger glitch every 60 seconds with slight randomization
+function scheduleGlitch() {
+  const baseDelay = 60000; // 60 seconds
+  const randomDelay = Math.random() * 10000 - 5000; // +/- 5 seconds
+  const delay = baseDelay + randomDelay;
+
+  setTimeout(() => {
+    triggerGlitch();
+    scheduleGlitch(); // Schedule next glitch
+  }, delay);
+}
+
+// Start glitch scheduling
+scheduleGlitch();
 
 // Initialize connection
 connect();
