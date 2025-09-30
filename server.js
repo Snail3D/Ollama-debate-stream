@@ -5,9 +5,22 @@ import axios from 'axios';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import net from 'net';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Check if port is already in use
+function checkPortInUse(port) {
+  return new Promise((resolve) => {
+    const tester = net.createServer()
+      .once('error', () => resolve(true))
+      .once('listening', () => {
+        tester.once('close', () => resolve(false)).close();
+      })
+      .listen(port);
+  });
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -177,7 +190,10 @@ async function callOllama(prompt, model) {
         }
       ],
       stream: false
+    }, {
+      timeout: 120000 // 2 minute timeout
     });
+    console.log('Ollama response length:', response.data.message.content.length, 'characters');
     return response.data.message.content;
   } catch (error) {
     console.error('Ollama API error:', error.message);
@@ -193,22 +209,33 @@ function generateDebateResponse(topic, side, turnNumber, previousArguments) {
   const role = side === 'pro' ? 'supporting' : 'opposing';
   const opponent = side === 'pro' ? 'opposition' : 'proponent';
 
-  let prompt = `You are participating in a formal debate. The topic is: "${topic}"
+  // Define distinct personalities
+  let personality;
+  if (side === 'pro') {
+    // PRO: Optimistic, passionate, emotional, uses exclamations
+    const proStyles = [
+      'enthusiastic and hopeful - use exclamations and positive energy',
+      'fiery and righteous - speak with moral conviction',
+      'inspiring and motivational - rally people to your cause'
+    ];
+    personality = proStyles[turnNumber % proStyles.length];
+  } else {
+    // CON: Skeptical, sarcastic, analytical, condescending
+    const conStyles = [
+      'skeptical and sarcastic - use mockery and rhetorical questions',
+      'coldly analytical - dissect arguments with logic',
+      'dismissive and condescending - act superior and frustrated'
+    ];
+    personality = conStyles[turnNumber % conStyles.length];
+  }
 
-You are arguing the ${role} side.
-This is turn ${turnNumber} of the debate.
+  let prompt = `Debate: "${topic}"
 
-IMPORTANT DEBATE RULES:
-1. Present clear, logical arguments
-2. Use facts and reasoning (you can use hypothetical examples)
-3. Address the opponent's points constructively
-4. Keep responses between 2-4 sentences
-5. Be respectful and professional
-6. Stay on topic
-7. Do not use inflammatory language
-8. Build on previous arguments when appropriate
-9. WAIT FOR YOUR TURN - Only speak when it's your turn to argue
-10. Do NOT interrupt or speak out of turn
+You argue ${role}. Turn ${turnNumber}.
+PERSONALITY: Be ${personality}
+
+Make your response reflect this personality strongly. Challenge opponent aggressively.
+MAXIMUM 3 sentences. Be intense and authentic to your personality.
 
 `;
 
@@ -312,6 +339,12 @@ async function debateLoop() {
 
     broadcastState();
 
+    // Clear moderator message after 5 seconds
+    setTimeout(() => {
+      debateState.moderatorMessage = null;
+      broadcastState();
+    }, 5000);
+
     // Small pause before first argument
     await new Promise(resolve => setTimeout(resolve, 2000));
   }
@@ -343,9 +376,8 @@ async function debateLoop() {
     // Broadcast immediately so the response shows up
     broadcastState();
 
-    // Wait longer before switching sides to ensure proper turn-by-turn flow
-    // This allows the frontend typewriter effect to complete
-    await new Promise(resolve => setTimeout(resolve, 8000));
+    // Wait before switching sides
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Switch sides
     debateState.currentSide = debateState.currentSide === 'pro' ? 'con' : 'pro';
@@ -393,7 +425,7 @@ function broadcastState() {
     topic: debateState.currentTopic,
     side: debateState.currentSide,
     turnNumber: debateState.turnNumber,
-    history: debateState.history,
+    history: debateState.history, // Keep isNew flags for typewriter effect
     mode: debateState.mode,
     queueLength: debateState.queue.length,
     moderatorMessage: debateState.moderatorMessage
@@ -406,12 +438,12 @@ function broadcastState() {
 wss.on('connection', (ws) => {
   console.log('Client connected');
 
-  // Send current state
+  // Send current state - remove isNew flags so existing arguments don't re-type on refresh
   ws.send(JSON.stringify({
     topic: debateState.currentTopic,
     side: debateState.currentSide,
     turnNumber: debateState.turnNumber,
-    history: debateState.history,
+    history: debateState.history.map(h => ({ ...h, isNew: false })),
     mode: debateState.mode,
     queueLength: debateState.queue.length,
     moderatorMessage: debateState.moderatorMessage
@@ -440,10 +472,19 @@ app.get('/api/state', (req, res) => {
   });
 });
 
-// Start debate loop
+// Start debate loop - run first debate immediately, then every interval
+debateLoop();
 setInterval(debateLoop, config.debateInterval);
 
-// Start server
+// Start server with port check
+const portInUse = await checkPortInUse(config.port);
+if (portInUse) {
+  console.error(`\n❌ ERROR: Port ${config.port} is already in use!`);
+  console.error(`Another instance of the server is already running.`);
+  console.error(`Please stop the other instance first or use a different port.\n`);
+  process.exit(1);
+}
+
 server.listen(config.port, () => {
   console.log(`Debate stream server running on http://localhost:${config.port}`);
   console.log(`Make sure Ollama is running on ${config.ollamaUrl}`);

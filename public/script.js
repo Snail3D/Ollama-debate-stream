@@ -139,14 +139,27 @@ function showWinner(data) {
 
   winnerSide.textContent = data.winner.toUpperCase();
   winnerSide.className = `winner-side ${data.winner}`;
-  winnerReason.textContent = data.reason;
+
+  // Typewriter effect for the reason
+  winnerReason.textContent = '';
+  let reasonIndex = 0;
+  const reasonText = data.reason;
+
+  const reasonInterval = setInterval(() => {
+    if (reasonIndex < reasonText.length) {
+      winnerReason.textContent += reasonText[reasonIndex];
+      reasonIndex++;
+    } else {
+      clearInterval(reasonInterval);
+    }
+  }, 50); // Faster typing for winner screen
 
   winnerDisplay.classList.remove('hidden');
 
-  // Hide after 10 seconds
+  // Hide after 15 seconds (increased to allow time for typing)
   setTimeout(() => {
     winnerDisplay.classList.add('hidden');
-  }, 10000);
+  }, 15000);
 }
 
 function updateUI(state) {
@@ -190,8 +203,8 @@ function updateUI(state) {
     proIndicator.classList.remove('active');
   }
 
-  // Update turn counter
-  document.getElementById('turnNumber').textContent = state.turnNumber;
+  // Update turn counter in header
+  document.getElementById('turnNumberHeader').textContent = state.turnNumber;
 
   // Update arguments (only if not streaming)
   if (!currentStreamingSide) {
@@ -304,7 +317,53 @@ function typewriterEffect(element, text) {
       cursor.remove();
       clearInterval(interval);
     }
-  }, 120); // 120ms per character for readable typing
+  }, 82); // 82ms per character for readable typing
+}
+
+// Topic submission handler
+document.getElementById('submitTopicBtn').addEventListener('click', submitTopic);
+document.getElementById('topicInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    submitTopic();
+  }
+});
+
+async function submitTopic() {
+  const input = document.getElementById('topicInput');
+  const feedback = document.getElementById('submitFeedback');
+  const topic = input.value.trim();
+
+  if (!topic) {
+    feedback.textContent = '❌ Enter a topic';
+    feedback.style.color = '#ff0000';
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/submit-topic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'Web User', message: topic })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      feedback.textContent = '✓ Topic queued!';
+      feedback.style.color = '#00ff00';
+      input.value = '';
+
+      setTimeout(() => {
+        feedback.textContent = '';
+      }, 3000);
+    } else {
+      feedback.textContent = '❌ ' + (data.reason || 'Failed');
+      feedback.style.color = '#ff0000';
+    }
+  } catch (error) {
+    feedback.textContent = '❌ Connection error';
+    feedback.style.color = '#ff0000';
+  }
 }
 
 // Initialize connection
