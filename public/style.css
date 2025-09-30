@@ -787,7 +787,7 @@ body.glitching::after {
   display: flex;
   gap: 40px;
   white-space: nowrap;
-  animation: scroll-left 60s linear infinite;
+  animation: scroll-left 240s linear infinite;
   color: #ffff00;
   font-size: 2.4em;
   font-weight: bold;
@@ -796,10 +796,10 @@ body.glitching::after {
 
 @keyframes scroll-left {
   0% {
-    transform: translateX(100%);
+    transform: translateX(0%);
   }
   100% {
-    transform: translateX(-100%);
+    transform: translateX(-33.33%);
   }
 }
 

@@ -238,8 +238,8 @@ function updateQueueTicker(queue) {
   // Add like & subscribe message at the end
   const fullContent = items + '<span>••• LIKE & SUBSCRIBE FOR MORE AI DEBATES!</span>';
 
-  // Duplicate for seamless loop
-  ticker.innerHTML = fullContent + fullContent;
+  // Duplicate 3x for consistent speed regardless of content length
+  ticker.innerHTML = fullContent + fullContent + fullContent;
 }
 
 function updateChatMessages(messages) {

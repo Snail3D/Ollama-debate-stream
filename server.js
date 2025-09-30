@@ -498,6 +498,21 @@ app.get('/api/state', (req, res) => {
   });
 });
 
+app.get('/api/queue', (req, res) => {
+  res.json({ queue: debateState.queue });
+});
+
+app.delete('/api/queue/:index', (req, res) => {
+  const index = parseInt(req.params.index);
+  if (index >= 0 && index < debateState.queue.length) {
+    const removed = debateState.queue.splice(index, 1);
+    broadcastState();
+    res.json({ success: true, removed: removed[0] });
+  } else {
+    res.status(400).json({ success: false, error: 'Invalid index' });
+  }
+});
+
 // Start debate loop - run first debate immediately, then every interval
 debateLoop();
 setInterval(debateLoop, config.debateInterval);
