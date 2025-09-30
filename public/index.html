@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Debate Terminal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>█▓▒░ AI DEBATE TERMINAL ░▒▓█</h1>
+      <div class="mode-indicator">
+        <span id="modeText">AUTO MODE</span>
+        <span id="queueIndicator"></span>
+      </div>
+    </div>
+
+    <!-- Moderator Messages -->
+    <div id="moderatorMessage" class="moderator-message hidden">
+      <div class="moderator-content">
+        <div class="moderator-text">
+          <div class="moderator-username"></div>
+          <div class="moderator-details"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Topic Display -->
+    <div class="topic-section">
+      <div class="topic-label">[ DEBATE TOPIC ]</div>
+      <div id="topicDisplay" class="topic-text">INITIALIZING...</div>
+    </div>
+
+    <!-- Debate Arena -->
+    <div class="debate-arena">
+      <!-- PRO Side (LEFT) -->
+      <div class="debate-side pro-side">
+        <div class="side-header pro-header">
+          <div class="side-label">PRO</div>
+          <div id="proIndicator" class="turn-indicator">●</div>
+        </div>
+        <div id="proArguments"></div>
+      </div>
+
+      <!-- VS Divider -->
+      <div class="vs-divider">
+        <div class="vs-text">VS</div>
+        <div class="turn-counter">
+          <span id="turnNumber">0</span>/10
+        </div>
+      </div>
+
+      <!-- CON Side (RIGHT) -->
+      <div class="debate-side con-side">
+        <div class="side-header con-header">
+          <div class="side-label">CON</div>
+          <div id="conIndicator" class="turn-indicator">●</div>
+        </div>
+        <div id="conArguments"></div>
+      </div>
+    </div>
+
+    <!-- Winner Display -->
+    <div id="winnerDisplay" class="winner-display hidden">
+      <div class="winner-content">
+        <div class="winner-title">DEBATE CONCLUDED</div>
+        <div class="winner-label">WINNER:</div>
+        <div id="winnerSide" class="winner-side"></div>
+        <div class="winner-reason" id="winnerReason"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="info-box">
+        █ YouTube: Type <strong>!debate [topic]</strong> in chat
+      </div>
+      <div class="connection-status">
+        <span id="connectionStatus" class="status-disconnected">● DISCONNECTED</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

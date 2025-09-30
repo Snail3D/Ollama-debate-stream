@@ -1,0 +1,8 @@
+{
+  "ollamaModel": "llama2",
+  "ollamaUrl": "http://localhost:11434",
+  "debateInterval": 15000,
+  "youtubeApiKey": "",
+  "youtubeVideoId": "",
+  "port": 3000
+}

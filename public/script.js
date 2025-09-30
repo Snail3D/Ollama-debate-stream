@@ -1,0 +1,311 @@
+// WebSocket connection
+let ws;
+let reconnectInterval;
+let currentStreamingSide = null;
+let streamingText = '';
+let streamingInterval = null;
+
+function connect() {
+  ws = new WebSocket(`ws://${window.location.host}`);
+
+  ws.onopen = () => {
+    console.log('Connected to server');
+    updateConnectionStatus(true);
+    clearInterval(reconnectInterval);
+  };
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.type === 'stream') {
+      handleStreamChunk(data);
+    } else if (data.type === 'winner') {
+      showWinner(data);
+    } else {
+      updateUI(data);
+    }
+  };
+
+  ws.onclose = () => {
+    console.log('Disconnected from server');
+    updateConnectionStatus(false);
+
+    // Attempt to reconnect every 3 seconds
+    reconnectInterval = setInterval(() => {
+      console.log('Attempting to reconnect...');
+      connect();
+    }, 3000);
+  };
+
+  ws.onerror = (error) => {
+    console.error('WebSocket error:', error);
+  };
+}
+
+function updateConnectionStatus(connected) {
+  const statusEl = document.getElementById('connectionStatus');
+  if (connected) {
+    statusEl.textContent = '● CONNECTED';
+    statusEl.className = 'status-connected';
+  } else {
+    statusEl.textContent = '● DISCONNECTED';
+    statusEl.className = 'status-disconnected';
+  }
+}
+
+// Handle streaming text chunks
+function handleStreamChunk(data) {
+  if (data.start) {
+    currentStreamingSide = data.side;
+    streamingText = '';
+
+    const container = document.getElementById(`${data.side}Arguments`);
+    const argBox = document.createElement('div');
+    argBox.className = 'argument-box streaming';
+    argBox.id = `streaming-${data.side}`;
+    container.appendChild(argBox);
+
+    // Auto-scroll to bottom
+    container.scrollTop = container.scrollHeight;
+  }
+
+  if (data.chunk) {
+    streamingText += data.chunk;
+    const argBox = document.getElementById(`streaming-${data.side}`);
+    if (argBox) {
+      argBox.innerHTML = `<div class="argument-text">${streamingText}<span class="typing-cursor"></span></div>`;
+    }
+
+    // Auto-scroll
+    const container = document.getElementById(`${data.side}Arguments`);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  if (data.complete) {
+    const argBox = document.getElementById(`streaming-${data.side}`);
+    if (argBox) {
+      argBox.classList.remove('streaming');
+      argBox.id = '';
+      argBox.innerHTML = `<div class="argument-text">${streamingText}</div>`;
+    }
+    currentStreamingSide = null;
+    streamingText = '';
+  }
+}
+
+// Show coin flip animation
+function showCoinFlip(data) {
+  const coinFlipDisplay = document.getElementById('coinFlipDisplay');
+  const coinFlipResult = document.getElementById('coinFlipResult');
+
+  coinFlipDisplay.classList.remove('hidden');
+  coinFlipResult.textContent = '';
+  coinFlipResult.className = 'coin-flip-result flipping';
+
+  // Matrix-style random characters
+  const chars = '01PROCON';
+  let iterations = 0;
+  const maxIterations = 15;
+
+  const flipInterval = setInterval(() => {
+    if (iterations < maxIterations) {
+      // Show random characters
+      let randomText = '';
+      for (let i = 0; i < 3; i++) {
+        randomText += chars[Math.floor(Math.random() * chars.length)];
+      }
+      coinFlipResult.textContent = randomText;
+      iterations++;
+    } else {
+      // Show final result
+      clearInterval(flipInterval);
+      coinFlipResult.textContent = data.side.toUpperCase();
+      coinFlipResult.className = `coin-flip-result ${data.side}`;
+
+      // Hide after 2 seconds - use window.setTimeout to ensure it executes
+      window.setTimeout(() => {
+        console.log('Hiding coin flip display');
+        coinFlipDisplay.classList.add('hidden');
+      }, 2000);
+    }
+  }, 80);
+}
+
+// Show winner screen
+function showWinner(data) {
+  const winnerDisplay = document.getElementById('winnerDisplay');
+  const winnerSide = document.getElementById('winnerSide');
+  const winnerReason = document.getElementById('winnerReason');
+
+  winnerSide.textContent = data.winner.toUpperCase();
+  winnerSide.className = `winner-side ${data.winner}`;
+  winnerReason.textContent = data.reason;
+
+  winnerDisplay.classList.remove('hidden');
+
+  // Hide after 10 seconds
+  setTimeout(() => {
+    winnerDisplay.classList.add('hidden');
+  }, 10000);
+}
+
+function updateUI(state) {
+  // Update topic
+  const topicDisplay = document.getElementById('topicDisplay');
+  if (state.topic) {
+    topicDisplay.textContent = state.topic;
+  } else {
+    topicDisplay.textContent = 'INITIALIZING...';
+  }
+
+  // Update mode indicator
+  const modeText = document.getElementById('modeText');
+  const queueIndicator = document.getElementById('queueIndicator');
+
+  if (state.mode === 'user') {
+    modeText.textContent = 'USER REQUEST MODE';
+  } else {
+    modeText.textContent = 'AUTO MODE';
+  }
+
+  if (state.queueLength > 0) {
+    queueIndicator.textContent = `${state.queueLength} IN QUEUE`;
+    queueIndicator.classList.add('active');
+  } else {
+    queueIndicator.classList.remove('active');
+  }
+
+  // Update moderator message
+  updateModeratorMessage(state.moderatorMessage);
+
+  // Update turn indicators
+  const proIndicator = document.getElementById('proIndicator');
+  const conIndicator = document.getElementById('conIndicator');
+
+  if (state.side === 'pro') {
+    proIndicator.classList.add('active');
+    conIndicator.classList.remove('active');
+  } else {
+    conIndicator.classList.add('active');
+    proIndicator.classList.remove('active');
+  }
+
+  // Update turn counter
+  document.getElementById('turnNumber').textContent = state.turnNumber;
+
+  // Update arguments (only if not streaming)
+  if (!currentStreamingSide) {
+    updateArguments(state.history);
+  }
+}
+
+function updateModeratorMessage(message) {
+  const moderatorEl = document.getElementById('moderatorMessage');
+
+  if (!message) {
+    moderatorEl.classList.add('hidden');
+    return;
+  }
+
+  moderatorEl.classList.remove('hidden');
+  moderatorEl.className = `moderator-message ${message.type}`;
+
+  const usernameEl = moderatorEl.querySelector('.moderator-username');
+  const detailsEl = moderatorEl.querySelector('.moderator-details');
+
+  if (message.type === 'rejected') {
+    usernameEl.textContent = `[ REJECTED ] ${message.username}`;
+    detailsEl.textContent = `REASON: ${message.reason}`;
+  } else if (message.type === 'queued') {
+    usernameEl.textContent = `[ ACCEPTED ] ${message.username}`;
+    detailsEl.textContent = `QUEUE POSITION: ${message.position}`;
+  } else if (message.type === 'starting') {
+    usernameEl.textContent = `[ NOW DEBATING ] ${message.username}`;
+    detailsEl.textContent = `TOPIC: ${message.message}`;
+  }
+}
+
+function updateArguments(history) {
+  const proContainer = document.getElementById('proArguments');
+  const conContainer = document.getElementById('conArguments');
+
+  // Clear if debate reset
+  if (history.length === 0) {
+    proContainer.innerHTML = '<div class="argument-box"><div class="waiting-text">WAITING FOR ARGUMENT...</div></div>';
+    conContainer.innerHTML = '<div class="argument-box"><div class="waiting-text">WAITING FOR ARGUMENT...</div></div>';
+    return;
+  }
+
+  // Get pro and con arguments
+  const proArgs = history.filter(h => h.side === 'pro');
+  const conArgs = history.filter(h => h.side === 'con');
+
+  // Update PRO arguments
+  const proExisting = proContainer.querySelectorAll('.argument-box:not(.streaming)').length;
+  if (proArgs.length > proExisting) {
+    proArgs.slice(proExisting).forEach(arg => {
+      const argBox = document.createElement('div');
+      argBox.className = 'argument-box';
+
+      if (arg.isNew) {
+        // Typewriter effect
+        typewriterEffect(argBox, arg.text);
+      } else {
+        argBox.innerHTML = `<div class="argument-text">${arg.text}</div>`;
+      }
+
+      proContainer.appendChild(argBox);
+    });
+    proContainer.scrollTop = proContainer.scrollHeight;
+  }
+
+  // Update CON arguments
+  const conExisting = conContainer.querySelectorAll('.argument-box:not(.streaming)').length;
+  if (conArgs.length > conExisting) {
+    conArgs.slice(conExisting).forEach(arg => {
+      const argBox = document.createElement('div');
+      argBox.className = 'argument-box';
+
+      if (arg.isNew) {
+        // Typewriter effect
+        typewriterEffect(argBox, arg.text);
+      } else {
+        argBox.innerHTML = `<div class="argument-text">${arg.text}</div>`;
+      }
+
+      conContainer.appendChild(argBox);
+    });
+    conContainer.scrollTop = conContainer.scrollHeight;
+  }
+}
+
+function typewriterEffect(element, text) {
+  let index = 0;
+  const textDiv = document.createElement('div');
+  textDiv.className = 'argument-text';
+  element.appendChild(textDiv);
+
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+  textDiv.appendChild(cursor);
+
+  const interval = setInterval(() => {
+    if (index < text.length) {
+      const char = text[index];
+      cursor.before(document.createTextNode(char));
+      index++;
+
+      // Auto-scroll
+      const container = element.closest('.debate-side');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    } else {
+      cursor.remove();
+      clearInterval(interval);
+    }
+  }, 120); // 120ms per character for readable typing
+}
+
+// Initialize connection
+connect();
