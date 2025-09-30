@@ -533,6 +533,14 @@ body.glitching::after {
   margin-left: 2px;
 }
 
+.pro-side .typing-cursor {
+  background: #ff0000;
+}
+
+.con-side .typing-cursor {
+  background: #00ff00;
+}
+
 .waiting-text {
   opacity: 0.5;
   font-style: italic;
