@@ -452,20 +452,12 @@ body.glitching::after {
 }
 
 .chat-messages::-webkit-scrollbar {
-  width: 6px;
+  display: none;
 }
 
-.chat-messages::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: #ffff00;
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb:hover {
-  background: #cccc00;
+.chat-messages {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .side-header {
