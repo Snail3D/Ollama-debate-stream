@@ -206,6 +206,11 @@ function updateUI(state) {
   // Update turn counter in header
   document.getElementById('turnNumberHeader').textContent = state.turnNumber;
 
+  // Update queue ticker
+  if (state.queue) {
+    updateQueueTicker(state.queue);
+  }
+
   // Update chat messages
   if (state.chatMessages) {
     updateChatMessages(state.chatMessages);
@@ -215,6 +220,23 @@ function updateUI(state) {
   if (!currentStreamingSide) {
     updateArguments(state.history);
   }
+}
+
+function updateQueueTicker(queue) {
+  const ticker = document.getElementById('queueTicker');
+
+  if (!queue || queue.length === 0) {
+    ticker.innerHTML = '<span>[ NO DEBATES IN QUEUE ]</span>';
+    return;
+  }
+
+  // Build ticker content
+  const items = queue.map((item, index) =>
+    `<span>UP NEXT #${index + 1}: ${item.topic}</span>`
+  ).join('');
+
+  // Duplicate for seamless loop
+  ticker.innerHTML = items + items;
 }
 
 function updateChatMessages(messages) {
@@ -294,8 +316,8 @@ function updateArguments(history) {
 
   // Clear if debate reset
   if (history.length === 0) {
-    proContainer.innerHTML = '<div class="argument-box"><div class="waiting-text">WAITING FOR ARGUMENT...</div></div>';
-    conContainer.innerHTML = '<div class="argument-box"><div class="waiting-text">WAITING FOR ARGUMENT...</div></div>';
+    proContainer.innerHTML = '';
+    conContainer.innerHTML = '';
     return;
   }
 

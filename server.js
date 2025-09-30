@@ -450,6 +450,7 @@ function broadcastState() {
     history: debateState.history, // Keep isNew flags for typewriter effect
     mode: debateState.mode,
     queueLength: debateState.queue.length,
+    queue: debateState.queue,
     moderatorMessage: debateState.moderatorMessage,
     chatMessages: debateState.chatMessages
   };
@@ -469,6 +470,7 @@ wss.on('connection', (ws) => {
     history: debateState.history.map(h => ({ ...h, isNew: false })),
     mode: debateState.mode,
     queueLength: debateState.queue.length,
+    queue: debateState.queue,
     moderatorMessage: debateState.moderatorMessage,
     chatMessages: debateState.chatMessages
   }));
