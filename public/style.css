@@ -363,7 +363,7 @@ body.glitching::after {
   font-size: 1.1em;
   letter-spacing: 0.05em;
   margin: 0;
-  animation: color-shift 12s ease-in-out infinite;
+  animation: color-shift 45s ease-in-out infinite;
 }
 
 @keyframes color-shift {
