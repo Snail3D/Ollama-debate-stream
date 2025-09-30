@@ -110,27 +110,9 @@ export class ContentFilter {
   checkGrammar(topic) {
     const issues = [];
 
-    // Must start with capital letter
-    if (topic[0] !== topic[0].toUpperCase()) {
-      issues.push('Must start with capital letter');
-    }
-
-    // Check for basic question format
-    const hasQuestionWord = /^(should|is|are|do|does|can|could|would|will|why|what|how|when|where|who)/i.test(topic);
-    const endsWithQuestion = topic.trim().endsWith('?');
-
-    if (!hasQuestionWord && !endsWithQuestion) {
-      issues.push('Should be phrased as a question');
-    }
-
     // Check for multiple spaces
     if (/\s{2,}/.test(topic)) {
       issues.push('Contains multiple spaces in a row');
-    }
-
-    // Check for basic punctuation at end
-    if (!/[?.!]$/.test(topic.trim())) {
-      issues.push('Must end with punctuation (?, !, or .)');
     }
 
     return issues;
