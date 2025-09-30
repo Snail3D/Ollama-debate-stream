@@ -44,6 +44,18 @@ if (fs.existsSync('./config.json')) {
   config = { ...config, ...JSON.parse(fs.readFileSync('./config.json', 'utf8')) };
 }
 
+// Load persisted queue if exists
+let persistedQueue = [];
+const queueFile = './queue.json';
+if (fs.existsSync(queueFile)) {
+  try {
+    persistedQueue = JSON.parse(fs.readFileSync(queueFile, 'utf8'));
+    console.log(`Loaded ${persistedQueue.length} items from persisted queue`);
+  } catch (e) {
+    console.error('Error loading queue:', e.message);
+  }
+}
+
 // Debate state
 let debateState = {
   currentTopic: null,
@@ -51,11 +63,20 @@ let debateState = {
   turnNumber: 0,
   history: [],
   mode: 'auto', // 'auto' or 'user'
-  queue: [],
+  queue: persistedQueue,
   isProcessing: false,
   moderatorMessage: null,
   chatMessages: [] // YouTube chat messages
 };
+
+// Save queue to disk
+function saveQueue() {
+  try {
+    fs.writeFileSync(queueFile, JSON.stringify(debateState.queue, null, 2));
+  } catch (e) {
+    console.error('Error saving queue:', e.message);
+  }
+}
 
 // Content filter
 import { ContentFilter } from './contentFilter.js';
@@ -126,6 +147,7 @@ function handleYouTubeMessage(username, message) {
     username,
     timestamp: Date.now()
   });
+  saveQueue();
 
   debateState.moderatorMessage = {
     type: 'queued',
@@ -334,6 +356,7 @@ async function debateLoop() {
     // Check queue first
     if (debateState.queue.length > 0) {
       const userRequest = debateState.queue.shift();
+      saveQueue();
       debateState.currentTopic = userRequest.topic;
       debateState.mode = 'user';
       debateState.moderatorMessage = {
@@ -509,6 +532,7 @@ app.delete('/api/queue/:index', (req, res) => {
   const index = parseInt(req.params.index);
   if (index >= 0 && index < debateState.queue.length) {
     const removed = debateState.queue.splice(index, 1);
+    saveQueue();
     broadcastState();
     res.json({ success: true, removed: removed[0] });
   } else {

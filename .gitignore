@@ -1,5 +1,7 @@
 node_modules/
 config.json
+queue.json
 .DS_Store
 *.log
-npm-debug.log*music/
+npm-debug.log*
+music/
