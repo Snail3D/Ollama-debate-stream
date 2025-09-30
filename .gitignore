@@ -1,6 +1,7 @@
 node_modules/
 config.json
 queue.json
+server.pid
 .DS_Store
 *.log
 npm-debug.log*

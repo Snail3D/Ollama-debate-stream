@@ -10,6 +10,52 @@ import net from 'net';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// PID file to ensure only one instance runs
+const pidFile = './server.pid';
+
+// Check if another instance is already running
+if (fs.existsSync(pidFile)) {
+  try {
+    const oldPid = parseInt(fs.readFileSync(pidFile, 'utf8'));
+    // Check if process is actually running
+    try {
+      process.kill(oldPid, 0); // Signal 0 checks if process exists
+      console.error(`\n❌ ERROR: Server is already running (PID: ${oldPid})`);
+      console.error(`Please stop the other instance first or delete ${pidFile} if it's stale.\n`);
+      process.exit(1);
+    } catch (e) {
+      // Process doesn't exist, stale PID file
+      console.log(`Removing stale PID file (old PID: ${oldPid})`);
+      fs.unlinkSync(pidFile);
+    }
+  } catch (e) {
+    console.error('Error reading PID file:', e.message);
+  }
+}
+
+// Write our PID
+fs.writeFileSync(pidFile, process.pid.toString());
+console.log(`Server PID: ${process.pid}`);
+
+// Clean up PID file on exit
+process.on('exit', () => {
+  try {
+    fs.unlinkSync(pidFile);
+  } catch (e) {
+    // Ignore errors
+  }
+});
+
+process.on('SIGINT', () => {
+  console.log('\n\nShutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('\n\nShutting down gracefully...');
+  process.exit(0);
+});
+
 // Check if port is already in use
 function checkPortInUse(port) {
   return new Promise((resolve) => {
