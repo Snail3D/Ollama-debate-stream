@@ -787,9 +787,9 @@ body.glitching::after {
   display: flex;
   gap: 40px;
   white-space: nowrap;
-  animation: scroll-left 30s linear infinite;
+  animation: scroll-left 60s linear infinite;
   color: #ffff00;
-  font-size: 1.2em;
+  font-size: 2.4em;
   font-weight: bold;
   text-shadow: 0 0 10px #ffff00;
 }
