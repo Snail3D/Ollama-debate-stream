@@ -226,7 +226,7 @@ function updateQueueTicker(queue) {
   const ticker = document.getElementById('queueTicker');
 
   if (!queue || queue.length === 0) {
-    ticker.innerHTML = '<span>[ NO DEBATES IN QUEUE ]</span>';
+    ticker.innerHTML = '<span>[ NO DEBATES IN QUEUE ] ••• LIKE & SUBSCRIBE FOR MORE AI DEBATES!</span>';
     return;
   }
 
@@ -235,8 +235,11 @@ function updateQueueTicker(queue) {
     `<span>UP NEXT #${index + 1}: ${item.topic}</span>`
   ).join('');
 
+  // Add like & subscribe message at the end
+  const fullContent = items + '<span>••• LIKE & SUBSCRIBE FOR MORE AI DEBATES!</span>';
+
   // Duplicate for seamless loop
-  ticker.innerHTML = items + items;
+  ticker.innerHTML = fullContent + fullContent;
 }
 
 function updateChatMessages(messages) {
