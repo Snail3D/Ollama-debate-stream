@@ -52,6 +52,7 @@ let debateState = {
   history: [],
   mode: 'auto', // 'auto' or 'user'
   queue: [],
+  superChatQueue: [], // Separate queue for superchats
   isProcessing: false,
   moderatorMessage: null,
   chatMessages: [], // YouTube chat messages
@@ -138,14 +139,35 @@ function handleSuperChatMessage(username, message) {
     return;
   }
 
-  // Superchat interrupts current debate and goes immediately
-  console.log(`SUPERCHAT PRIORITY: Interrupting current debate for ${username}`);
+  // Check superchat queue limit (max 50)
+  if (debateState.superChatQueue.length >= 50) {
+    const queueFullTimestamp = Date.now();
+    debateState.moderatorMessage = {
+      type: 'queue_full',
+      username: `${username} (SUPERCHAT)`,
+      message,
+      reason: 'SuperChat queue is full (max 50). Please wait to submit!',
+      timestamp: queueFullTimestamp
+    };
+    broadcastState();
 
-  // Save current debate to front of queue if active
+    setTimeout(() => {
+      if (debateState.moderatorMessage?.timestamp === queueFullTimestamp) {
+        debateState.moderatorMessage = null;
+        broadcastState();
+      }
+    }, 5000);
+    return;
+  }
+
+  // Superchat IMMEDIATELY cancels current debate and starts new one
+  console.log(`💰 SUPERCHAT PRIORITY: Canceling current debate for ${username}`);
+
+  // Save current debate to front of regular queue if active
   if (debateState.currentTopic && debateState.history.length > 0) {
     debateState.queue.unshift({
       topic: debateState.currentTopic,
-      username: 'RESUMED',
+      username: 'INTERRUPTED',
       timestamp: Date.now()
     });
   }
@@ -155,19 +177,23 @@ function handleSuperChatMessage(username, message) {
   debateState.history = [];
   debateState.turnNumber = 0;
   debateState.isProcessing = false;
+  debateState.mode = 'superchat';
 
-  const queueTimestamp = Date.now();
+  const superChatTimestamp = Date.now();
   debateState.moderatorMessage = {
-    type: 'superchat',
+    type: 'superchat_incoming',
     username,
     message,
-    timestamp: queueTimestamp
+    timestamp: superChatTimestamp
   };
 
   broadcastState();
 
+  // Show "SuperChat Debate Incoming!" animation
+  postBotMessage(`💰💥 SUPERCHAT DEBATE INCOMING! 💥💰 ${username} paid to debate: "${message}"`);
+
   setTimeout(() => {
-    if (debateState.moderatorMessage?.timestamp === queueTimestamp) {
+    if (debateState.moderatorMessage?.timestamp === superChatTimestamp) {
       debateState.moderatorMessage = null;
       broadcastState();
     }
@@ -200,21 +226,21 @@ function handleYouTubeMessage(username, message) {
     return;
   }
 
-  // Check queue limit (max 3), except for whitelist users
+  // Check queue limit (max 50), except for whitelist users
   const whitelistUsers = ['Snail3D', 'Snail'];
   const isWhitelisted = whitelistUsers.some(wlUser => username.toLowerCase().includes(wlUser.toLowerCase()));
 
-  if (debateState.queue.length >= 3 && !isWhitelisted) {
+  if (debateState.queue.length >= 50 && !isWhitelisted) {
+    const queueFullTimestamp = Date.now();
     debateState.moderatorMessage = {
       type: 'queue_full',
       username,
       message,
-      reason: 'Queue is full (max 3). Try again later!',
-      timestamp: Date.now()
+      reason: 'Queue is full (max 50). Please wait to submit!',
+      timestamp: queueFullTimestamp
     };
     broadcastState();
 
-    const queueFullTimestamp = Date.now();
     setTimeout(() => {
       if (debateState.moderatorMessage?.timestamp === queueFullTimestamp) {
         debateState.moderatorMessage = null;
