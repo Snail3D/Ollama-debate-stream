@@ -87,17 +87,21 @@ export class YouTubeChatMonitor {
           this.chatCallback(username, text);
         }
 
-        // Check if message starts with !debate or similar trigger
-        if (text.toLowerCase().startsWith('!debate ')) {
-          const topic = text.substring(8).trim();
-          console.log(`YouTube ${isSuperChat ? 'SUPERCHAT' : 'request'} from ${username}: ${topic}`);
+        // SuperChats don't need !debate command - ANY superchat message becomes a debate
+        if (isSuperChat && this.superChatCallback) {
+          // Remove !debate prefix if present, otherwise use full message
+          let topic = text.toLowerCase().startsWith('!debate ')
+            ? text.substring(8).trim()
+            : text.trim();
 
-          // Handle superchat with priority
-          if (isSuperChat && this.superChatCallback) {
-            this.superChatCallback(username, topic);
-          } else {
-            this.messageCallback(username, topic);
-          }
+          console.log(`💰 SUPERCHAT from ${username}: ${topic}`);
+          this.superChatCallback(username, topic);
+        }
+        // Regular messages need !debate command
+        else if (text.toLowerCase().startsWith('!debate ')) {
+          const topic = text.substring(8).trim();
+          console.log(`YouTube request from ${username}: ${topic}`);
+          this.messageCallback(username, topic);
         }
       }
 

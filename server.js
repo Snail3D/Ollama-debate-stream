@@ -71,6 +71,43 @@ const topicGenerator = new TopicGenerator();
 import { YouTubeChatMonitor } from './youtubeChatMonitor.js';
 let youtubeChatMonitor = null;
 
+// Bot announcement hooks - variety of phrases
+const botHooks = {
+  superChatPromo: [
+    '💰 Want instant debate priority? Use SUPERCHAT to skip the queue!',
+    '🔥 SUPERCHATS get immediate attention - your debate starts NOW!',
+    '⚡ Skip the line! SUPERCHATS interrupt current debates instantly!',
+    '💸 Got a burning question? SUPERCHAT for instant debate priority!',
+    '🎯 SUPERCHATS = Instant priority! No waiting, just debating!',
+    '💎 Premium priority! SUPERCHAT to start your debate immediately!',
+    '🚀 SUPERCHATS launch debates instantly - no queue, no wait!',
+    '👑 VIP treatment! SUPERCHAT to cancel current debate & start yours!',
+    '⭐ Want the spotlight? SUPERCHAT for immediate debate action!',
+    '💥 SUPERCHATS = Instant debates! Cut the line, start the discussion!'
+  ],
+  debateStart: [
+    '🎙️ DEBATE #{count}: "{topic}" ({mode})',
+    '🔴 LIVE NOW - DEBATE #{count}: {topic} ({mode})',
+    '⚔️ New debate #{count} starting: "{topic}" ({mode})',
+    '🎬 Rolling! Debate #{count}: {topic} ({mode})',
+    '📣 Debate #{count} begins: "{topic}" ({mode})',
+    '🌟 Next up - Debate #{count}: {topic} ({mode})'
+  ],
+  instructions: [
+    '💬 Use !debate [your question] to join the queue | 💰 SUPERCHATS skip ahead!',
+    '📝 Type !debate [question] to queue up | 💸 SUPERCHAT for instant priority!',
+    '✍️ Submit !debate [topic] to get in line | ⚡ SUPERCHATS go first!',
+    '💭 Queue your debate with !debate [question] | 🔥 SUPERCHAT = instant start!',
+    '🎤 Join queue: !debate [your topic] | 💎 SUPERCHAT = no waiting!'
+  ]
+};
+
+// Get random hook from category
+function getRandomHook(category) {
+  const hooks = botHooks[category];
+  return hooks[Math.floor(Math.random() * hooks.length)];
+}
+
 // Bot chat responses
 function postBotMessage(text) {
   debateState.chatMessages.push({
@@ -87,6 +124,13 @@ function postBotMessage(text) {
   console.log(`Bot message: ${text}`);
   broadcastState();
 }
+
+// Periodic superchat promotion (every 10 minutes)
+setInterval(() => {
+  const promoMessage = getRandomHook('superChatPromo');
+  postBotMessage(promoMessage);
+  console.log('Posted periodic superchat promotion');
+}, 600000); // 10 minutes
 
 // Handle all YouTube chat messages for display
 function handleChatMessage(username, text) {
@@ -492,8 +536,14 @@ async function debateLoop() {
     // Increment debate counter
     debateState.debateCounter++;
 
-    // Bot announces new debate with counter and superchat info
-    postBotMessage(`🎙️ DEBATE #${debateState.debateCounter}: "${debateState.currentTopic}" ${debateState.mode === 'user' ? '(User request)' : '(Auto)'} | 💬 Use !debate [question] to queue | 💰 SUPERCHATS get instant priority!`);
+    // Bot announces new debate with random hook
+    const mode = debateState.mode === 'user' ? 'User request' : debateState.mode === 'superchat' ? 'SUPERCHAT' : 'Auto';
+    const debateAnnouncement = getRandomHook('debateStart')
+      .replace('{count}', debateState.debateCounter)
+      .replace('{topic}', debateState.currentTopic)
+      .replace('{mode}', mode);
+    const instructions = getRandomHook('instructions');
+    postBotMessage(`${debateAnnouncement} | ${instructions}`);
 
     // Clear moderator message after 5 seconds
     setTimeout(() => {
