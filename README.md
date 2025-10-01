@@ -1,225 +1,221 @@
-# Ollama Debate Stream
+# Eternal Terminal - 24/7 AI Debate Stream
 
-An automated AI debate system powered by Ollama with YouTube chat integration for live streaming.
+🤖 **Two AI models debating autonomously, 24/7, live on YouTube**
+
+Watch live: [YouTube Stream](https://youtube.com/@YourChannel)
 
 ## Features
 
-- ✅ Automated debates between PRO and CON sides using Ollama
-- ✅ Proper debate rules and structure (10 turns per debate)
-- ✅ Content filtering (blocks sensitive topics: religion, sex, violence, etc.)
-- ✅ YouTube chat integration with priority queue system
-- ✅ Auto-mode with curated safe topics when no user requests
-- ✅ Beautiful web UI optimized for OBS streaming
-- ✅ Real-time WebSocket updates
-- ✅ Request rejection notifications with reasons
-- ✅ Queue status display
+- **Live AI vs AI Debates**: Two llama3.2:3b models debating various topics
+- **Chat Interaction**: Viewers can suggest topics and influence debates
+- **Topic Voting**: Community-driven topic selection
+- **Super Chat Priority**: Priority queue for Super Chat topic requests
+- **Auto-Recovery**: Automatic restart on crashes with state persistence
+- **Health Monitoring**: Self-healing system checks every 2 minutes
 
-## Prerequisites
+## Tech Stack
 
-1. **Node.js** (v16 or higher)
-2. **Ollama** installed and running
-   - Install from: https://ollama.ai
-   - Pull a model: `ollama pull llama2`
-3. **YouTube Data API key** (optional, for chat integration)
-   - Get one from: https://console.cloud.google.com/
+- **AI**: Ollama (llama3.2:3b)
+- **Backend**: Node.js + Express + WebSocket
+- **Frontend**: Vanilla JavaScript
+- **Streaming**: FFmpeg + RTMP to YouTube
+- **Display**: Xvfb + Chromium (headless)
+- **API**: YouTube Data API v3 with OAuth2
 
-## Installation
+## Setup
 
-1. Navigate to the project directory:
+### Prerequisites
+
+- Ubuntu 22.04 (or similar)
+- Node.js 20+
+- Ollama with llama3.2:3b model
+- FFmpeg
+- Chromium browser
+- YouTube account with API access
+
+### Installation
+
+1. **Clone the repository**
 ```bash
+git clone https://github.com/Snail3D/ollama-debate-stream.git
 cd ollama-debate-stream
 ```
 
-2. Install dependencies:
+2. **Install dependencies**
 ```bash
 npm install
 ```
 
-3. Create configuration file:
+3. **Install system dependencies**
 ```bash
-cp config.example.json config.json
+sudo apt-get update
+sudo apt-get install -y xvfb chromium-browser ffmpeg
 ```
 
-4. Edit `config.json` with your settings:
+4. **Install Ollama and download model**
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull llama3.2:3b
+```
+
+5. **Configure YouTube OAuth**
+```bash
+# Get OAuth credentials from Google Cloud Console
+# Run setup script
+./setup-youtube-oauth.sh
+# Follow prompts to authorize
+```
+
+6. **Update config.json**
 ```json
 {
-  "ollamaModel": "llama2",
-  "ollamaUrl": "http://localhost:11434",
-  "debateInterval": 15000,
-  "youtubeApiKey": "YOUR_API_KEY_HERE",
-  "youtubeVideoId": "YOUR_VIDEO_ID_HERE",
-  "port": 3000
+  ollamaModel: llama3.2:3b,
+  judgeModel: llama3.2:3b,
+  ollamaUrl: http://localhost:11434,
+  debateInterval: 30000,
+  youtubeApiKey: YOUR_API_KEY,
+  youtubeVideoId: YOUR_VIDEO_ID,
+  port: 3000
 }
 ```
+
+7. **Run the application**
+```bash
+# Start the debate server
+node server.js
+
+# In another terminal, start streaming
+./stream-to-youtube.sh
+```
+
+## Systemd Service (Production)
+
+Create `/etc/systemd/system/eternal-debate.service`:
+
+```ini
+[Unit]
+Description=Eternal Terminal Debate Stream
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/ollama-debate-stream
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+```bash
+sudo systemctl enable eternal-debate
+sudo systemctl start eternal-debate
+```
+
+## Automatic Features
+
+### State Persistence
+The system saves debate state every 10 seconds to `debate-state.json`. On restart, it resumes from the last saved position.
+
+### Auto Stream Creation
+When a YouTube stream ends, the system automatically creates a new one via the YouTube API and updates the config.
+
+### Health Monitoring
+A cron job runs every 2 minutes to check:
+- Node.js server health
+- Xvfb display status
+- Chromium browser stability
+- FFmpeg streaming status
+- RTMP connection to YouTube
+- Memory usage
+
+If any component fails, it's automatically restarted.
 
 ## Configuration
 
-### Basic Settings
+### Debate Interval
+Adjust debate speed in `config.json`:
+- `30000` = 30 seconds between turns (default)
+- `60000` = 60 seconds between turns
 
-- `ollamaModel`: The Ollama model to use (e.g., "llama2", "mistral", "gemma")
-- `ollamaUrl`: URL where Ollama is running (default: http://localhost:11434)
-- `debateInterval`: Time in milliseconds between debate turns (default: 15000 = 15 seconds)
-- `port`: Port for the web server (default: 3000)
+### Streaming Quality
+Edit `stream-to-youtube.sh`:
+- Bitrate: `-b:v 4500k` (adjust for your bandwidth)
+- Preset: `-preset ultrafast` (faster encoding, lower quality)
+- Resolution: `1920x1080` (can reduce to 1280x720)
 
-### YouTube Integration (Optional)
+### Music Volume
+Background music volume: `volume=0.6` (60%)
 
-To enable YouTube chat integration:
+## Chat Commands
 
-1. Create a Google Cloud project
-2. Enable YouTube Data API v3
-3. Create an API key
-4. Get your live stream video ID from the URL: `youtube.com/watch?v=VIDEO_ID`
-5. Add both to `config.json`
+Viewers can interact via YouTube chat:
 
-**Note:** YouTube chat integration requires an active live stream. The system will work in auto-mode without it.
+- **Regular messages**: Suggest debate topics
+- **Super Chats**: Priority topic requests
+- **Voting**: Participate in topic polls
 
-## Usage
+## Architecture
 
-### Starting the Server
-
-1. Make sure Ollama is running:
-```bash
-ollama serve
 ```
-
-2. Start the debate server:
-```bash
-npm start
+┌─────────────┐
+│  YouTube    │◄─── RTMP Stream ◄─── FFmpeg
+│  Live API   │
+└──────┬──────┘
+       │ Chat Polling
+       ▼
+┌─────────────┐     WebSocket      ┌──────────────┐
+│  Node.js    │◄──────────────────►│   Browser    │
+│  Server     │                     │  (Chromium)  │
+└──────┬──────┘                     └──────────────┘
+       │                                   ▲
+       ▼                                   │
+┌─────────────┐                     ┌──────────────┐
+│   Ollama    │                     │    Xvfb      │
+│  llama3.2   │                     │  (Virtual    │
+└─────────────┘                     │   Display)   │
+                                    └──────────────┘
 ```
-
-3. Open your browser to: `http://localhost:3000`
-
-### For OBS Streaming
-
-1. Start the server
-2. In OBS, add a **Browser Source**
-3. Set URL to: `http://localhost:3000`
-4. Recommended resolution: 1920x1080
-5. Enable "Shutdown source when not visible" (optional)
-6. Click OK
-
-### YouTube Chat Commands
-
-Viewers can submit debate topics using:
-```
-!debate Should pineapple be on pizza?
-```
-
-The system will:
-- Filter the topic for sensitive content
-- Show acceptance/rejection message with reason
-- Add to queue if approved
-- Process in order when current debate finishes
-
-## How It Works
-
-### Debate Flow
-
-1. **Topic Selection**:
-   - Checks queue for user requests first
-   - Falls back to auto-generated safe topics if queue is empty
-
-2. **Debate Process**:
-   - 10 turns total (5 per side)
-   - Each side presents arguments
-   - AI responds to opponent's points
-   - Follows formal debate structure
-
-3. **Content Filtering**:
-   - Blocks sensitive topics (religion, violence, sexual content, etc.)
-   - Shows rejection reason to user
-   - Length validation (5-200 characters)
-
-### Modes
-
-- **AUTO MODE**: System generates safe topics automatically
-- **USER REQUEST MODE**: Processing topics from YouTube chat queue
-
-## Customization
-
-### Adding Topics
-
-Edit `topicGenerator.js` to add more auto-mode topics:
-
-```javascript
-this.topics = [
-  "Your new debate topic here?",
-  // ... more topics
-];
-```
-
-### Adjusting Content Filter
-
-Edit `contentFilter.js` to modify blocked keywords:
-
-```javascript
-this.blockedKeywords = [
-  'keyword1',
-  'keyword2',
-  // ...
-];
-```
-
-### Changing Debate Length
-
-Modify the turn limit in `server.js`:
-
-```javascript
-// End debate after 10 turns
-if (debateState.turnNumber >= 10) {
-  debateState.currentTopic = null;
-}
-```
-
-### Styling
-
-Edit `public/style.css` to customize the appearance for your stream.
 
 ## Troubleshooting
 
-### "Cannot connect to Ollama"
-- Ensure Ollama is running: `ollama serve`
-- Check the `ollamaUrl` in config.json
-- Verify the model is installed: `ollama list`
+### Stream shows black screen
+- Check if Chromium is running: `ps aux | grep chromium`
+- Check Chromium logs: `tail /tmp/chromium.log`
+- Restart stream: `./stream-to-youtube.sh`
 
-### "YouTube chat not working"
-- Verify your API key is correct
-- Check the video ID matches your live stream
-- Ensure the stream is currently live
-- Check console logs for specific errors
+### AI not responding
+- Check Ollama status: `systemctl status ollama`
+- Test model: `ollama run llama3.2:3b test`
+- Check server logs: `journalctl -u eternal-debate -f`
 
-### "Debates not starting"
-- Check Ollama is responding: `curl http://localhost:11434/api/tags`
-- Verify the model name in config.json matches installed models
-- Check server console for error messages
+### Memory issues
+- Reduce bitrate in streaming script
+- Use smaller model: `gemma:2b` instead of `llama3.2:3b`
+- Increase swap space
 
-### "WebSocket disconnected"
-- Server may have crashed - check console
-- Restart the server: `npm start`
-- Browser will auto-reconnect every 3 seconds
+## Contributing
 
-## API Endpoints
-
-- `GET /` - Main web interface
-- `GET /api/state` - Get current debate state (JSON)
-- `POST /api/submit-topic` - Submit a topic manually
-- `WS /` - WebSocket for real-time updates
-
-## Performance Tips
-
-1. **Faster responses**: Use a smaller model like `phi` or `gemma`
-2. **Longer debates**: Increase turn limit in server.js
-3. **Faster turns**: Decrease `debateInterval` in config.json
-4. **Less lag**: Reduce browser source resolution in OBS
+Pull requests welcome! Please ensure:
+- Code follows existing style
+- Test on a clean Ubuntu 22.04 install
+- Update README if adding features
 
 ## License
 
-ISC
+MIT License - See LICENSE file
 
 ## Credits
 
-Built with:
-- [Ollama](https://ollama.ai) - AI inference
-- [Express](https://expressjs.com) - Web server
-- [ws](https://github.com/websockets/ws) - WebSocket support
-- [YouTube Data API](https://developers.google.com/youtube/v3) - Chat integration
+- **AI Models**: Ollama (llama3.2:3b)
+- **Music**: AI-generated ambient tracks
+- **Streaming**: FFmpeg + YouTube Live
+- **Creator**: [@Snail3D](https://github.com/Snail3D)
+
+## Support
+
+- GitHub Issues: [Report bugs](https://github.com/Snail3D/ollama-debate-stream/issues)
+- YouTube: [Watch live](https://youtube.com/@YourChannel)
