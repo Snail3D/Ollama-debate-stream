@@ -71,8 +71,19 @@ const topicGenerator = new TopicGenerator();
 import { YouTubeChatMonitor } from './youtubeChatMonitor.js';
 let youtubeChatMonitor = null;
 
-// Track seen usernames for new user detection
-const seenUsernames = new Set();
+// Track seen usernames with timestamps for 48-hour detection
+const seenUsernames = new Map(); // username -> last seen timestamp
+
+// Clean up old usernames (older than 48 hours) every hour
+setInterval(() => {
+  const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+  for (const [username, timestamp] of seenUsernames.entries()) {
+    if (timestamp < fortyEightHoursAgo) {
+      seenUsernames.delete(username);
+    }
+  }
+  console.log(`Cleaned up old usernames. Currently tracking: ${seenUsernames.size}`);
+}, 3600000); // 1 hour
 
 // Bot announcement hooks - variety of phrases
 const botHooks = {
@@ -126,11 +137,11 @@ const botHooks = {
     '✨ The magic of machine learning in action!'
   ],
   newUserWelcome: [
-    '👋 Welcome {username}! Type !debate [your question] to join the debate queue!',
-    '🎉 Hey {username}! Want to see YOUR topic debated? Use !debate [topic]!',
-    '🌟 Welcome {username}! Submit !debate [question] to queue your debate!',
-    '👏 {username} just joined! Try !debate [any topic] to start a discussion!',
-    '🚀 Welcome aboard {username}! Use !debate [topic] to get in the queue!'
+    '👋 Welcome @{username}! Type !debate [your question] to join the debate queue! 💬',
+    '🎉 Hey @{username}! Want to see YOUR topic debated? Use !debate [topic] and we\'ll queue it up! ⚡',
+    '🌟 Welcome @{username}! Submit !debate [question] to queue your debate topic! 🎯',
+    '👏 @{username} just joined! Try !debate [any topic] to start an AI debate! 🤖',
+    '🚀 Welcome aboard @{username}! Use !debate [your topic] to get in the queue! Regular queue or SUPERCHAT for instant priority! 💰'
   ]
 };
 
@@ -196,14 +207,21 @@ function handleChatMessage(username, text) {
     debateState.chatMessages = debateState.chatMessages.slice(-50);
   }
 
-  // Detect new users and welcome them (once per username)
-  if (!seenUsernames.has(username)) {
-    seenUsernames.add(username);
+  // Detect new users (not seen in last 48 hours) and welcome them
+  const now = Date.now();
+  const fortyEightHoursAgo = now - (48 * 60 * 60 * 1000);
+  const lastSeen = seenUsernames.get(username);
+
+  if (!lastSeen || lastSeen < fortyEightHoursAgo) {
+    seenUsernames.set(username, now);
     const welcomeMessage = getRandomHook('newUserWelcome').replace('{username}', username);
     setTimeout(() => {
       postBotMessage(welcomeMessage);
-      console.log(`Welcomed new user: ${username}`);
+      console.log(`Welcomed new/returning user: ${username} (last seen: ${lastSeen ? new Date(lastSeen).toLocaleString() : 'never'})`);
     }, 2000); // 2 second delay so it doesn't overlap with their message
+  } else {
+    // Update last seen timestamp
+    seenUsernames.set(username, now);
   }
 
   console.log(`Total chat messages: ${debateState.chatMessages.length}`);
