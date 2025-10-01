@@ -492,11 +492,11 @@ function generateDebateResponse(topic, side, turnNumber, previousArguments) {
     ];
     personality = proStyles[turnNumber % proStyles.length];
   } else {
-    // CON: Skeptical, sarcastic, analytical, condescending
+    // CON: Skeptical, analytical, pragmatic
     const conStyles = [
-      'skeptical and sarcastic - use mockery and rhetorical questions',
-      'coldly analytical - dissect arguments with logic',
-      'dismissive and condescending - act superior and frustrated'
+      'skeptical and questioning - use rhetorical questions and challenge assumptions',
+      'coldly analytical - dissect arguments with logic and evidence',
+      'pragmatic and realistic - focus on practical concerns and real-world implications'
     ];
     personality = conStyles[turnNumber % conStyles.length];
   }
@@ -506,8 +506,8 @@ function generateDebateResponse(topic, side, turnNumber, previousArguments) {
 You argue ${role}. Turn ${turnNumber}.
 PERSONALITY: Be ${personality}
 
-Make your response reflect this personality strongly. Challenge opponent aggressively.
-MAXIMUM 3 sentences. Be intense and authentic to your personality.
+Make your response reflect this personality strongly. Challenge the ARGUMENT, not the person.
+MAXIMUM 3 sentences. Attack IDEAS, never the debater. Be intense and authentic to your personality.
 
 `;
 
