@@ -1,15 +1,16 @@
 import axios from 'axios';
 
 export class YouTubeChatMonitor {
-  constructor(apiKey, videoId, messageCallback, chatCallback) {
+  constructor(apiKey, videoId, messageCallback, chatCallback, superChatCallback) {
     this.apiKey = apiKey;
     this.videoId = videoId;
     this.messageCallback = messageCallback;
     this.chatCallback = chatCallback; // For all chat messages
+    this.superChatCallback = superChatCallback; // For superchat priority
     this.liveChatId = null;
     this.nextPageToken = null;
     this.isRunning = false;
-    this.pollInterval = 5000; // 5 seconds
+    this.pollInterval = 51000; // 51 seconds - stays within daily quota with 15% headroom
     this.seenMessageIds = new Set();
   }
 
@@ -78,6 +79,8 @@ export class YouTubeChatMonitor {
 
         const username = message.authorDetails.displayName;
         const text = message.snippet.displayMessage;
+        const messageType = message.snippet.type;
+        const isSuperChat = messageType === 'superChatEvent';
 
         // Send all messages to chat display callback
         if (this.chatCallback) {
@@ -87,8 +90,14 @@ export class YouTubeChatMonitor {
         // Check if message starts with !debate or similar trigger
         if (text.toLowerCase().startsWith('!debate ')) {
           const topic = text.substring(8).trim();
-          console.log(`YouTube request from ${username}: ${topic}`);
-          this.messageCallback(username, topic);
+          console.log(`YouTube ${isSuperChat ? 'SUPERCHAT' : 'request'} from ${username}: ${topic}`);
+
+          // Handle superchat with priority
+          if (isSuperChat && this.superChatCallback) {
+            this.superChatCallback(username, topic);
+          } else {
+            this.messageCallback(username, topic);
+          }
         }
       }
 

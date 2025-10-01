@@ -218,7 +218,7 @@ body.glitching::after {
 }
 
 .turn-counter-header {
-  font-size: 1.2em;
+  font-size: 0.8em;
   font-weight: bold;
   color: #00ff00;
   text-shadow: 0 0 10px #00ff00;
@@ -317,7 +317,7 @@ body.glitching::after {
 }
 
 .turn-counter-header {
-  font-size: 1.2em;
+  font-size: 0.8em;
   font-weight: bold;
   color: #00ff00;
   text-shadow: 0 0 10px #00ff00;
@@ -527,10 +527,14 @@ body.glitching::after {
   display: inline-block;
   width: 10px;
   height: 1.2em;
-  background: #00ff00;
+  background: transparent;
   animation: blink 0.7s infinite;
   vertical-align: text-bottom;
   margin-left: 2px;
+}
+
+.debate-side .typing-cursor {
+  background: #00ff00;
 }
 
 .pro-side .typing-cursor {
