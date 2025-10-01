@@ -71,6 +71,9 @@ const topicGenerator = new TopicGenerator();
 import { YouTubeChatMonitor } from './youtubeChatMonitor.js';
 let youtubeChatMonitor = null;
 
+// Track seen usernames for new user detection
+const seenUsernames = new Set();
+
 // Bot announcement hooks - variety of phrases
 const botHooks = {
   superChatPromo: [
@@ -99,6 +102,35 @@ const botHooks = {
     '✍️ Submit !debate [topic] to get in line | ⚡ SUPERCHATS go first!',
     '💭 Queue your debate with !debate [question] | 🔥 SUPERCHAT = instant start!',
     '🎤 Join queue: !debate [your topic] | 💎 SUPERCHAT = no waiting!'
+  ],
+  coolMessages: [
+    '🤖 Beep boop! AI debates are powered by local LLMs - no cloud needed!',
+    '🧠 Did you know? These debates use gemma3:1b running on Ollama!',
+    '⚡ Fun fact: Each argument takes about 2-3 seconds to generate!',
+    '🎭 The AI judge picks winners based on logic, evidence, and persuasiveness!',
+    '🌟 Loving the debates? Drop a like and subscribe for more AI battles!',
+    '🔥 These AIs never get tired - they can debate 24/7!',
+    '💭 Pro tip: More specific debate topics = better arguments!',
+    '🎯 The AI analyzes previous arguments to build stronger cases!',
+    '🚀 Each debate runs for 10 rounds before the judge decides!',
+    '🤯 Mind blown yet? This is all happening in real-time!',
+    '💡 Want to see YOUR question debated? Use !debate [your topic]!',
+    '🎪 Welcome to the AI debate arena - where silicon meets rhetoric!',
+    '⚔️ May the best argument win! These AIs show no mercy!',
+    '🌐 Running live from a Linode server streaming to YouTube!',
+    '🎬 Lights, camera, DEBATE! Another round of AI vs AI!',
+    '🔮 The future is now - watching AIs debate philosophy!',
+    '💪 These language models are flexing their reasoning skills!',
+    '🎲 Random topics or user requests - both get epic debates!',
+    '🏆 After 10 rounds, an AI judge crowns the champion!',
+    '✨ The magic of machine learning in action!'
+  ],
+  newUserWelcome: [
+    '👋 Welcome {username}! Type !debate [your question] to join the debate queue!',
+    '🎉 Hey {username}! Want to see YOUR topic debated? Use !debate [topic]!',
+    '🌟 Welcome {username}! Submit !debate [question] to queue your debate!',
+    '👏 {username} just joined! Try !debate [any topic] to start a discussion!',
+    '🚀 Welcome aboard {username}! Use !debate [topic] to get in the queue!'
   ]
 };
 
@@ -132,6 +164,24 @@ setInterval(() => {
   console.log('Posted periodic superchat promotion');
 }, 600000); // 10 minutes
 
+// Random cool messages at varying intervals (3-7 minutes)
+function scheduleNextCoolMessage() {
+  // Random delay between 3-7 minutes (180000-420000ms)
+  const delay = Math.floor(Math.random() * 240000) + 180000;
+
+  setTimeout(() => {
+    const coolMessage = getRandomHook('coolMessages');
+    postBotMessage(coolMessage);
+    console.log(`Posted cool message (next in ${Math.round(delay/60000)} mins)`);
+
+    // Schedule the next one
+    scheduleNextCoolMessage();
+  }, delay);
+}
+
+// Start the random cool message cycle
+scheduleNextCoolMessage();
+
 // Handle all YouTube chat messages for display
 function handleChatMessage(username, text) {
   console.log(`Chat message from ${username}: ${text}`);
@@ -144,6 +194,16 @@ function handleChatMessage(username, text) {
   // Keep only last 50 messages
   if (debateState.chatMessages.length > 50) {
     debateState.chatMessages = debateState.chatMessages.slice(-50);
+  }
+
+  // Detect new users and welcome them (once per username)
+  if (!seenUsernames.has(username)) {
+    seenUsernames.add(username);
+    const welcomeMessage = getRandomHook('newUserWelcome').replace('{username}', username);
+    setTimeout(() => {
+      postBotMessage(welcomeMessage);
+      console.log(`Welcomed new user: ${username}`);
+    }, 2000); // 2 second delay so it doesn't overlap with their message
   }
 
   console.log(`Total chat messages: ${debateState.chatMessages.length}`);
