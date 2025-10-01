@@ -54,7 +54,8 @@ let debateState = {
   queue: [],
   isProcessing: false,
   moderatorMessage: null,
-  chatMessages: [] // YouTube chat messages
+  chatMessages: [], // YouTube chat messages
+  debateCounter: 0 // Total debates completed
 };
 
 // Content filter
@@ -462,8 +463,11 @@ async function debateLoop() {
 
     broadcastState();
 
-    // Bot announces new debate
-    postBotMessage(`Starting debate: "${debateState.currentTopic}" ${debateState.mode === 'user' ? '(User request)' : '(Auto-generated)'}`);
+    // Increment debate counter
+    debateState.debateCounter++;
+
+    // Bot announces new debate with counter and superchat info
+    postBotMessage(`🎙️ DEBATE #${debateState.debateCounter}: "${debateState.currentTopic}" ${debateState.mode === 'user' ? '(User request)' : '(Auto)'} | 💬 Use !debate [question] to queue | 💰 SUPERCHATS get instant priority!`);
 
     // Clear moderator message after 5 seconds
     setTimeout(() => {
