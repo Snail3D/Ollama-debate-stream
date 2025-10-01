@@ -59,6 +59,40 @@ let debateState = {
   debateCounter: 0 // Total debates completed
 };
 
+// Load saved state if exists
+const STATE_FILE = './debate-state.json';
+if (fs.existsSync(STATE_FILE)) {
+  try {
+    const savedState = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    debateState = { ...debateState, ...savedState };
+    console.log('✅ Loaded debate state from disk - resuming from turn', debateState.turnNumber);
+  } catch (err) {
+    console.log('⚠️ Could not load saved state:', err.message);
+  }
+}
+
+// Save state to disk periodically and on changes
+function saveDebateState() {
+  try {
+    const stateToSave = {
+      currentTopic: debateState.currentTopic,
+      currentSide: debateState.currentSide,
+      turnNumber: debateState.turnNumber,
+      history: debateState.history,
+      mode: debateState.mode,
+      queue: debateState.queue,
+      superChatQueue: debateState.superChatQueue,
+      debateCounter: debateState.debateCounter
+    };
+    fs.writeFileSync(STATE_FILE, JSON.stringify(stateToSave, null, 2));
+  } catch (err) {
+    console.error('⚠️ Could not save state:', err.message);
+  }
+}
+
+// Auto-save every 10 seconds
+setInterval(saveDebateState, 10000);
+
 // Content filter
 import { ContentFilter } from './contentFilter.js';
 const contentFilter = new ContentFilter();
@@ -661,6 +695,9 @@ async function debateLoop() {
 
     // Broadcast immediately so the response shows up
     broadcastState();
+
+    // Save state after each turn
+    saveDebateState();
 
     // Wait before switching sides
     await new Promise(resolve => setTimeout(resolve, 3000));
