@@ -542,6 +542,7 @@ PERSONALITY: Be ${personality}
 
 Make your response reflect this personality strongly. Challenge the ARGUMENT, not the person.
 MAXIMUM 3 sentences. Attack IDEAS, never the debater. Be intense and authentic to your personality.
+IMPORTANT: Use ONLY English. NO Italian, foreign language phrases, or expressions like "dio mio", "mamma mia", etc.
 
 `;
 
