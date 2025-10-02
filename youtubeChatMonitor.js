@@ -97,9 +97,15 @@ export class YouTubeChatMonitor {
           console.log(`💰 SUPERCHAT from ${username}: ${topic}`);
           this.superChatCallback(username, topic);
         }
-        // Regular messages need !debate command
+        }
+        // Regular messages - check for !debate or just debate
         else if (text.toLowerCase().startsWith('!debate ')) {
           const topic = text.substring(8).trim();
+          console.log(`YouTube request from ${username}: ${topic}`);
+          this.messageCallback(username, topic);
+        }
+        else if (text.toLowerCase().startsWith('debate ')) {
+          const topic = text.substring(7).trim();
           console.log(`YouTube request from ${username}: ${topic}`);
           this.messageCallback(username, topic);
         }

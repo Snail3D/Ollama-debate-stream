@@ -31,8 +31,8 @@ app.use(express.static('public'));
 
 // Load configuration
 let config = {
-  ollamaModel: 'llama2',
-  judgeModel: 'llama2',
+  ollamaModel: 'gemma3:1b',
+  judgeModel: 'gemma3:1b',
   ollamaUrl: 'http://localhost:11434',
   debateInterval: 15000, // 15 seconds between turns
   youtubeApiKey: '',
@@ -399,6 +399,30 @@ function handleYouTubeMessage(username, message) {
 
     setTimeout(() => {
       if (debateState.moderatorMessage?.timestamp === queueFullTimestamp) {
+        debateState.moderatorMessage = null;
+        broadcastState();
+      }
+    }, 5000);
+    return;
+  }
+
+  // Check for duplicate in queue (case insensitive)
+  const isDuplicate = debateState.queue.some(item => 
+    item.topic.toLowerCase().trim() === message.toLowerCase().trim()
+  );
+  if (isDuplicate) {
+    console.log(`❌ Duplicate topic rejected: ${message}`);
+    const dupeTimestamp = Date.now();
+    debateState.moderatorMessage = {
+      type: 'rejected',
+      username,
+      message,
+      reason: 'This topic is already in the queue!',
+      timestamp: dupeTimestamp
+    };
+    broadcastState();
+    setTimeout(() => {
+      if (debateState.moderatorMessage?.timestamp === dupeTimestamp) {
         debateState.moderatorMessage = null;
         broadcastState();
       }
