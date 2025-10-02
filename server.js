@@ -65,6 +65,7 @@ if (fs.existsSync(STATE_FILE)) {
   try {
     const savedState = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
     debateState = { ...debateState, ...savedState };
+    debateState.moderatorMessage = null; // Clear any old moderator messages
     console.log('✅ Loaded debate state from disk - resuming from turn', debateState.turnNumber);
   } catch (err) {
     console.log('⚠️ Could not load saved state:', err.message);
@@ -470,7 +471,7 @@ async function callOllamaStream(prompt, model, onChunk) {
       stream: true
       ,
       options: {
-        num_predict: 150,
+        num_predict: 75,
         temperature: 0.8
       }
       ,
@@ -575,7 +576,7 @@ You argue ${role}. Turn ${turnNumber}.
 PERSONALITY: Be ${personality}
 
 Make your response reflect this personality strongly. Challenge the ARGUMENT, not the person.
-MAXIMUM 3 sentences. Attack IDEAS, never the debater. Be intense and authentic to your personality.
+MAXIMUM 2 SHORT sentences. Attack IDEAS, never the debater. Be intense and authentic to your personality.
 
 `;
 
@@ -654,6 +655,7 @@ async function debateLoop() {
     // Check queue first
     if (debateState.queue.length > 0) {
       const userRequest = debateState.queue.shift();
+      saveDebateState(); // Save immediately after removing from queue
       debateState.currentTopic = userRequest.topic;
       debateState.mode = 'user';
       debateState.moderatorMessage = {
@@ -716,33 +718,57 @@ async function debateLoop() {
 
   console.log('Calling Ollama...');
   
-  // Send start signal
-  broadcastToAll({
-    type: "stream",
-    start: true,
-    side: debateState.currentSide,
-    turn: debateState.turnNumber
-  });
-  
+  // Retry logic: try up to 3 times if response is empty
   let response = "";
-  await callOllamaStream(prompt, config.ollamaModel, (chunk) => {
-    response += chunk;
+  let retryCount = 0;
+  const maxRetries = 3;
+  
+  while (!response && retryCount < maxRetries) {
+    if (retryCount > 0) {
+      console.log(`Retry attempt ${retryCount}/${maxRetries} for ${debateState.currentSide} turn ${debateState.turnNumber}`);
+    }
+    
+    // Send start signal
     broadcastToAll({
       type: "stream",
-      chunk: chunk,
+      start: true,
       side: debateState.currentSide,
       turn: debateState.turnNumber
     });
-  });
+    
+    response = "";
+    try {
+      await callOllamaStream(prompt, config.ollamaModel, (chunk) => {
+        response += chunk;
+        broadcastToAll({
+          type: "stream",
+          chunk: chunk,
+          side: debateState.currentSide,
+          turn: debateState.turnNumber
+        });
+      });
+    } catch (error) {
+      console.error(`Ollama streaming error on attempt ${retryCount + 1}:`, error.message);
+    }
+    
+    // Send complete signal
+    broadcastToAll({
+      type: "stream",
+      complete: true,
+      side: debateState.currentSide,
+      turn: debateState.turnNumber
+    });
+    
+    retryCount++;
+    
+    // If empty and we have retries left, wait a bit before retrying
+    if (!response && retryCount < maxRetries) {
+      console.log(`Response was empty, waiting 2s before retry...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
   
-  // Send complete signal
-  broadcastToAll({
-    type: "stream",
-    complete: true,
-    side: debateState.currentSide,
-    turn: debateState.turnNumber
-  });
-  
+  console.log('Ollama response received:', response ? `success (${response.length} chars)` : 'failed after ${maxRetries} attempts');
   console.log('Ollama response received:', response ? 'success' : 'failed');
 
   if (response) {
