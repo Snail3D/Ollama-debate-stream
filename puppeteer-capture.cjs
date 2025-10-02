@@ -18,7 +18,9 @@ const puppeteer = require("puppeteer");
       "--display=:99",
       "--force-page-scale-factor=1",
       "--high-dpi-support=0",
-      "--font-render-hinting=none"
+      "--font-render-hinting=none",
+      "--disk-cache-size=0",
+      "--disable-application-cache"
     ],
     defaultViewport: {
       width: 1920,
@@ -46,17 +48,16 @@ const puppeteer = require("puppeteer");
   
   console.log("Navigating to http://localhost:3000...");
   
+  // Hard reload to bypass cache
   await page.goto("http://localhost:3000", {
     waitUntil: "networkidle2",
     timeout: 60000
   });
   
-  console.log("Page loaded! Waiting for fonts...");
+  // Force reload once more
+  await page.reload({ waitUntil: "networkidle2" });
   
-  // Wait for Google Fonts to load
-  await page.evaluateHandle('document.fonts.ready');
-  
-  console.log("Fonts loaded!");
+  console.log("Page loaded and reloaded\!");
   
   // Force zoom to 100% using multiple methods
   await page.evaluate(() => {
@@ -66,7 +67,7 @@ const puppeteer = require("puppeteer");
     document.documentElement.style.zoom = "1.0";
     // Hide cursor
     const style = document.createElement("style");
-    style.textContent = "* { cursor: none !important; }";
+    style.textContent = "* { cursor: none \!important; }";
     document.head.appendChild(style);
   });
   
