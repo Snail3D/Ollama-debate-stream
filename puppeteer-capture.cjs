@@ -48,6 +48,10 @@ const puppeteer = require('puppeteer');
     document.body.style.transform = 'scale(1)';
     document.body.style.transformOrigin = '0 0';
     document.documentElement.style.zoom = '1.0';
+    // Hide cursor
+    const style = document.createElement("style");
+    style.textContent = "* { cursor: none !important; }";
+    document.head.appendChild(style);
   });
   
   console.log('Page loaded at 1920x1080 with forced 100% zoom, keeping browser open...');
