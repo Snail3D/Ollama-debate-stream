@@ -34,7 +34,7 @@ let config = {
   ollamaModel: 'gemma3:1b',
   judgeModel: 'gemma3:1b',
   ollamaUrl: 'http://localhost:11434',
-  debateInterval: 15000, // 15 seconds between turns
+  debateInterval: 5000, // 15 seconds between turns
   youtubeApiKey: '',
   youtubeVideoId: '',
   port: 3000
@@ -468,6 +468,8 @@ async function callOllamaStream(prompt, model, onChunk) {
         }
       ],
       stream: true
+      ,
+      keep_alive: 0
     }, {
       responseType: 'stream'
     });
@@ -520,6 +522,8 @@ async function callOllama(prompt, model) {
         }
       ],
       stream: false
+      ,
+      keep_alive: 0
     }, {
       timeout: 120000 // 2 minute timeout
     });

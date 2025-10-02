@@ -67,7 +67,8 @@ function handleStreamChunk(data) {
 
     // Auto-scroll to bottom
     container.scrollTop = container.scrollHeight;
-    setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+    setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+    setTimeout(() => container.scrollTop = container.scrollHeight, 300);
   }
 
   if (data.chunk) {
@@ -80,7 +81,8 @@ function handleStreamChunk(data) {
     // Auto-scroll
     const container = document.getElementById(`${data.side}Arguments`);
     container.scrollTop = container.scrollHeight;
-    setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+    setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+    setTimeout(() => container.scrollTop = container.scrollHeight, 300);
   }
 
   if (data.complete) {
@@ -397,7 +399,8 @@ function typewriterEffect(element, text) {
       const container = element.closest('.debate-side');
       if (container) {
         container.scrollTop = container.scrollHeight;
-    setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+    setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+    setTimeout(() => container.scrollTop = container.scrollHeight, 300);
       }
     } else {
       cursor.remove();
