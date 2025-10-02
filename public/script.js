@@ -188,79 +188,29 @@ function showUpNextAnnouncement(data) {
 // Display Bible verse with intro, typing animation, and fades
 async function showBibleVerse(data) {
   const display = document.getElementById("bibleVerseDisplay");
-  const introEl = document.getElementById("bibleVerseIntro");
   const contentEl = document.getElementById("bibleVerseContent");
   const textEl = document.getElementById("bibleVerseText");
   const refEl = document.getElementById("bibleVerseReference");
   
-  if (!display || !introEl || !contentEl || !textEl || !refEl || !data.verse) return;
+  if (\!display || \!contentEl || \!textEl || \!refEl || \!data.verse) return;
   
-  // Clear previous content
-  introEl.innerHTML = "";
-  textEl.innerHTML = "";
-  refEl.textContent = "";
-  introEl.classList.remove("fade-out");
-  contentEl.classList.remove("fade-in", "fade-out");
-  contentEl.style.opacity = "0";
+  // Set content immediately
+  textEl.textContent = data.verse.text;
+  refEl.textContent = "- " + data.verse.reference;
+  
+  // Reset animation
+  contentEl.style.animation = "none";
+  setTimeout(() => {
+    contentEl.style.animation = "";
+  }, 10);
   
   // Show display
   display.classList.remove("hidden");
   
-  // Type out intro phrase character by character (40ms per char)
-  const intro = data.intro || "Here is some Truth...";
-  let currentIntro = "";
-  const INTRO_DELAY = 40;
-  
-  for (let i = 0; i < intro.length; i++) {
-    currentIntro += intro[i];
-    introEl.innerHTML = currentIntro + "<span class=\"bible-verse-typing-cursor\"></span>";
-    await new Promise(resolve => setTimeout(resolve, INTRO_DELAY));
-  }
-  
-  // Remove cursor from intro
-  introEl.innerHTML = currentIntro;
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Fade out intro
-  introEl.classList.add("fade-out");
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  introEl.innerHTML = "";
-  
-  // Fade in content wrapper
-  contentEl.classList.add("fade-in");
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Type out the verse text character by character (50ms per char)
-  const text = data.verse.text;
-  let currentText = "";
-  const CHAR_DELAY = 50;
-  
-  for (let i = 0; i < text.length; i++) {
-    currentText += text[i];
-    textEl.innerHTML = currentText + "<span class=\"bible-verse-typing-cursor\"></span>";
-    await new Promise(resolve => setTimeout(resolve, CHAR_DELAY));
-  }
-  
-  // Remove cursor
-  textEl.innerHTML = currentText;
-  
-  // Show reference after small pause
-  await new Promise(resolve => setTimeout(resolve, 500));
-  refEl.textContent = "- " + data.verse.reference;
-  
-  // Keep visible for reading time (based on verse length)
-  const wordsCount = text.split(" ").length;
-  const readingTime = Math.max(10000, (wordsCount / 200) * 60 * 1000);
-  await new Promise(resolve => setTimeout(resolve, readingTime));
-  
-  // Fade out entire display
-  contentEl.classList.add("fade-out");
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Hide display
+  // Hide after 20 seconds (matching CSS animation duration)
+  await new Promise(resolve => setTimeout(resolve, 20000));
   display.classList.add("hidden");
 }
-function showWinner(data) {
   const winnerDisplay = document.getElementById('winnerDisplay');
   const winnerSide = document.getElementById('winnerSide');
   const winnerReason = document.getElementById('winnerReason');

@@ -971,92 +971,69 @@ body.glitching::after {
   }
 }
 
-/* Bible Verse Display */
+/* Bible Verse Display - Scrolling from bottom to top */
 .bible-verse-display {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  max-width: 1200px;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-  border: 3px solid #00ff00;
-  border-radius: 15px;
-  padding: 60px 80px;
-  box-shadow: 0 0 50px rgba(0, 255, 0, 0.4), inset 0 0 40px rgba(0, 255, 0, 0.1);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
   z-index: 10000;
-  text-align: center;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 .bible-verse-display.hidden {
   display: none;
 }
 
+.bible-verse-content {
+  width: 80%;
+  max-width: 1200px;
+  text-align: center;
+  padding: 60px 80px;
+  animation: scrollUp 20s linear forwards;
+}
+
+@keyframes scrollUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-150%);
+    opacity: 0;
+  }
+}
+
 .bible-verse-text {
-  font-family: 'Courier New', monospace;
-  font-size: 36px; /* 300% larger than normal 12px */
-  line-height: 1.6;
+  font-family: Courier New, monospace;
+  font-size: 48px;
+  line-height: 1.8;
   color: #00ff00;
-  text-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
-  margin-bottom: 30px;
+  text-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+  margin-bottom: 40px;
   min-height: 100px;
 }
 
 .bible-verse-reference {
-  font-family: 'Courier New', monospace;
-  font-size: 24px;
+  font-family: Courier New, monospace;
+  font-size: 32px;
   color: #00ccff;
-  text-shadow: 0 0 10px rgba(0, 204, 255, 0.6);
+  text-shadow: 0 0 15px rgba(0, 204, 255, 0.8);
   font-weight: bold;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
+  margin-top: 30px;
 }
-
-.bible-verse-typing-cursor {
-  display: inline-block;
-  width: 12px;
-  height: 36px;
-  background: #00ff00;
-  margin-left: 4px;
-  animation: blink 1s infinite;
-  vertical-align: text-bottom;
-}
-
-@keyframes blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-
-/* Verse intro text */
-.bible-verse-intro {
-  font-family: 'Courier New', monospace;
-  font-size: 28px;
-  line-height: 1.6;
-  color: #00ccff;
-  text-shadow: 0 0 15px rgba(0, 204, 255, 0.6);
-  margin-bottom: 40px;
-  opacity: 1;
-  transition: opacity 2s ease-out;
-}
-
-.bible-verse-intro.fade-out {
-  opacity: 0;
-}
-
-.bible-verse-content {
-  opacity: 0;
-  transition: opacity 2s ease-in;
-}
-
-.bible-verse-content.fade-in {
-  opacity: 1;
-}
-
-.bible-verse-content.fade-out {
-  opacity: 0;
-  transition: opacity 2s ease-out;
-}
-* { cursor: none \!important; }
-
 /* Fix number display - remove letter spacing from numbers */
 #turnNumberHeader,
 .turn-counter-header span,
