@@ -71,6 +71,9 @@ const wss = new WebSocketServer({ server });
 app.use(express.json());
 app.use(express.static('public'));
 
+// Server-side rendered stream page (no WebSocket needed)
+
+
 // Load configuration
 let config = {
   groqApiKey: process.env.GROQ_API_KEY || '',
@@ -1089,6 +1092,80 @@ app.post('/api/submit-topic', (req, res) => {
   const { username, message } = req.body;
   handleYouTubeMessage(username || 'Anonymous', message);
   res.json({ success: true });
+});
+
+// Server-side rendered stream page (no WebSocket needed)
+app.get("/stream", (req, res) => {
+  const p1 = debateState.personality1 || { name: "Debater One", color: "#00ff00" };
+  const p2 = debateState.personality2 || { name: "Debater Two", color: "#ff6b6b" };
+  const history = debateState.history || [];
+  const verse = BIBLE_VERSES[Math.floor(Math.random() * BIBLE_VERSES.length)] || { reference: "", text: "" };
+  
+  const historyHTML = history.slice(-8).map(arg => {
+    const color = arg.side === "side1" ? p1.color : p2.color;
+    const name = arg.side === "side1" ? p1.name : p2.name;
+    return `<div class="argument ${arg.side}">
+      <div class="arg-side" style="color: ${color}">${name} - Turn ${arg.turn}</div>
+      <div class="arg-text">${arg.text}</div>
+    </div>`;
+  }).join("");
+  
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="3">
+  <title>Eternal Debate</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; cursor: none !important; }
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: "Share Tech Mono", "Courier New", monospace;
+      color: #00ff00;
+      overflow: hidden;
+    }
+    .container { padding: 20px; height: 100vh; display: flex; flex-direction: column; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .title { font-size: 48px; color: #00ff00; text-shadow: 0 0 20px #00ff00; }
+    .topic { font-size: 24px; color: #ffffff; margin-top: 10px; }
+    .debaters { display: flex; justify-content: space-around; margin: 20px 0; }
+    .debater { text-align: center; }
+    .debater-name { font-size: 32px; font-weight: bold; text-shadow: 0 0 15px; }
+    .arguments { flex: 1; overflow-y: auto; padding: 20px; }
+    .argument { margin: 15px 0; padding: 15px; background: rgba(0,255,0,0.1); border-left: 3px solid; border-radius: 5px; }
+    .argument.side1 { border-color: ${p1.color}; }
+    .argument.side2 { border-color: ${p2.color}; }
+    .arg-side { font-size: 14px; opacity: 0.8; margin-bottom: 5px; }
+    .arg-text { font-size: 18px; line-height: 1.6; }
+    .verse { position: fixed; bottom: 20px; left: 20px; right: 20px; text-align: center; padding: 15px; background: rgba(0,0,0,0.7); border: 2px solid #00ff00; border-radius: 10px; }
+    .verse-ref { font-size: 16px; color: #00ff00; margin-bottom: 5px; }
+    .verse-text { font-size: 14px; color: #ffffff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">⚡ ETERNAL DEBATE ⚡</div>
+      <div class="topic">${debateState.currentTopic || "Waiting for topic..."}</div>
+    </div>
+    <div class="debaters">
+      <div class="debater">
+        <div class="debater-name" style="color: ${p1.color}">${p1.name.toUpperCase()}</div>
+      </div>
+      <div class="debater">
+        <div class="debater-name" style="color: ${p2.color}">${p2.name.toUpperCase()}</div>
+      </div>
+    </div>
+    <div class="arguments">
+      ${historyHTML}
+    </div>
+    <div class="verse">
+      <div class="verse-ref">${verse.reference}</div>
+      <div class="verse-text">"${verse.text}"</div>
+    </div>
+  </div>
+</body>
+</html>`);
 });
 
 app.get('/api/state', (req, res) => {
