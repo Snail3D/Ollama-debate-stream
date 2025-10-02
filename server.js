@@ -31,7 +31,7 @@ app.use(express.static('public'));
 
 // Load configuration
 let config = {
-  ollamaModel: 'gemma3:1b',
+  ollamaModel: 'gemma3:270m',
   judgeModel: 'gemma3:1b',
   ollamaUrl: 'http://localhost:11434',
   debateInterval: 5000, // 15 seconds between turns
