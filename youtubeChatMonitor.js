@@ -97,7 +97,6 @@ export class YouTubeChatMonitor {
           console.log(`💰 SUPERCHAT from ${username}: ${topic}`);
           this.superChatCallback(username, topic);
         }
-        }
         // Regular messages - check for !debate or just debate
         else if (text.toLowerCase().startsWith('!debate ')) {
           const topic = text.substring(8).trim();
