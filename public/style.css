@@ -1,3 +1,4 @@
+* { cursor: none !important; }
 * {
   margin: 0;
   padding: 0;
@@ -724,6 +725,7 @@ body.glitching::after {
 
 /* Moderator Messages */
 .moderator-message {
+  font-family: 'Share Tech Mono', 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol';
   position: fixed;
   top: 80px;
   left: 50%;

@@ -6,6 +6,11 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
 import net from 'net';
+import Groq from 'groq-sdk';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,10 +36,9 @@ app.use(express.static('public'));
 
 // Load configuration
 let config = {
-  ollamaModel: 'gemma3:270m',
-  judgeModel: 'gemma3:1b',
-  ollamaUrl: 'http://localhost:11434',
-  debateInterval: 5000, // 15 seconds between turns
+  groqApiKey: process.env.GROQ_API_KEY || '',
+  groqModel: 'llama-3.3-70b-versatile',
+  debateInterval: 3000,
   youtubeApiKey: '',
   youtubeVideoId: '',
   port: 3000
@@ -43,6 +47,8 @@ let config = {
 if (fs.existsSync('./config.json')) {
   config = { ...config, ...JSON.parse(fs.readFileSync('./config.json', 'utf8')) };
 }
+
+const groq = new Groq({ apiKey: config.groqApiKey });
 
 // Debate state
 let debateState = {
@@ -151,7 +157,7 @@ const botHooks = {
   ],
   coolMessages: [
     '🤖 Beep boop! AI debates are powered by local LLMs - no cloud needed!',
-    '🧠 Did you know? These debates use gemma3:1b running on Ollama!',
+    '🧠 Did you know? These debates use llama-3.3-70b via Groq API!',
     '⚡ Fun fact: Each argument takes about 2-3 seconds to generate!',
     '🎭 The AI judge picks winners based on logic, evidence, and persuasiveness!',
     '🌟 Loving the debates? Drop a like and subscribe for more AI battles!',
@@ -457,91 +463,58 @@ function handleYouTubeMessage(username, message) {
   }, 5000);
 }
 
-// Ollama API call with streaming
-async function callOllamaStream(prompt, model, onChunk) {
+// Groq API call with streaming
+async function callGroqStream(prompt, model, onChunk) {
   try {
-    const response = await axios.post(`${config.ollamaUrl}/api/chat`, {
-      model: model || config.ollamaModel,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
+    const stream = await groq.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
+      model: model || config.groqModel,
+      temperature: 0.8,
+      max_tokens: 75,
       stream: true
-      ,
-      options: {
-        num_predict: 200,
-        temperature: 0.8
-      }
-      ,
-      keep_alive: 0
-    }, {
-      responseType: "stream",
-      timeout: 30000
     });
 
-    let fullResponse = '';
-
-    return new Promise((resolve, reject) => {
-      response.data.on('data', (chunk) => {
-        const lines = chunk.toString().split('\n').filter(line => line.trim());
-
-        for (const line of lines) {
-          try {
-            const parsed = JSON.parse(line);
-            if (parsed.message?.content) {
-              fullResponse += parsed.message.content;
-              if (onChunk) {
-                onChunk(parsed.message.content);
-              }
-            }
-          } catch (e) {
-            // Skip invalid JSON
+    let fullResponse = "";
+    
+    // Character throttling for smooth typing effect
+    const CHAR_DELAY_MS = 50; // 50ms per character = 20 chars/sec
+    
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        fullResponse += content;
+        
+        // Send each character individually with delay
+        for (const char of content) {
+          if (onChunk) {
+            onChunk(char);
           }
+          await new Promise(resolve => setTimeout(resolve, CHAR_DELAY_MS));
         }
-      });
-
-      response.data.on('end', () => {
-        resolve(fullResponse);
-      });
-
-      response.data.on('error', (error) => {
-        console.error('Stream error:', error.message);
-        reject(error);
-      });
-    });
+      }
+    }
+    
+    return fullResponse;
   } catch (error) {
-    console.error('Ollama API error:', error.message);
-    return null;
+    console.error("Groq stream error:", error.message);
+    throw error;
   }
 }
 
-// Non-streaming Ollama call (for judge)
-async function callOllama(prompt, model) {
+// Non-streaming Groq call (for judge)
+async function callGroq(prompt, model) {
   try {
-    const response = await axios.post(`${config.ollamaUrl}/api/chat`, {
-      model: model || config.ollamaModel,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      stream: false
-      ,
-      keep_alive: 0
-    }, {
-      timeout: 120000 // 2 minute timeout
+    const response = await groq.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
+      model: model || config.groqModel,
+      temperature: 0.8,
+      max_tokens: 75
     });
-    console.log('Ollama response length:', response.data.message.content.length, 'characters');
-    return response.data.message.content;
+
+    return response.choices[0]?.message?.content || "";
   } catch (error) {
-    console.error('Ollama API error:', error.message);
-    if (error.response?.data) {
-      console.error('Error details:', JSON.stringify(error.response.data));
-    }
-    return null;
+    console.error("Groq error:", error.message);
+    throw error;
   }
 }
 
@@ -625,7 +598,7 @@ REASON: [One clear sentence explaining why they won]
 
 Provide ONLY the format above, nothing else.`;
 
-  const response = await callOllama(judgePrompt, config.judgeModel);
+  const response = await callGroq(judgePrompt, config.groqModel);
 
   if (!response) {
     return { winner: 'pro', reason: 'Debate concluded.' };
@@ -716,7 +689,7 @@ async function debateLoop() {
     debateState.history
   );
 
-  console.log('Calling Ollama...');
+  console.log('Generating argument...');
   
   // Retry logic: try up to 3 times if response is empty
   let response = "";
@@ -738,7 +711,7 @@ async function debateLoop() {
     
     response = "";
     try {
-      await callOllamaStream(prompt, config.ollamaModel, (chunk) => {
+      await callGroqStream(prompt, config.groqModel, (chunk) => {
         response += chunk;
         broadcastToAll({
           type: "stream",
@@ -748,7 +721,7 @@ async function debateLoop() {
         });
       });
     } catch (error) {
-      console.error(`Ollama streaming error on attempt ${retryCount + 1}:`, error.message);
+      console.error(`Groq API error on attempt ${retryCount + 1}:`, error.message);
     }
     
     // Send complete signal
@@ -768,8 +741,8 @@ async function debateLoop() {
     }
   }
   
-  console.log('Ollama response received:', response ? `success (${response.length} chars)` : 'failed after ${maxRetries} attempts');
-  console.log('Ollama response received:', response ? 'success' : 'failed');
+  console.log('Generation complete:', response ? `success (${response.length} chars)` : 'failed after ${maxRetries} attempts');
+  console.log('Generation complete:', response ? 'success' : 'failed');
 
   if (response) {
     debateState.history.push({
@@ -905,7 +878,7 @@ if (portInUse) {
 
 server.listen(config.port, () => {
   console.log(`Debate stream server running on http://localhost:${config.port}`);
-  console.log(`Make sure Ollama is running on ${config.ollamaUrl}`);
+  console.log(`Using Groq API for debate generation`);
   if (youtubeChatMonitor) {
     console.log('YouTube chat monitoring enabled');
     youtubeChatMonitor.start();
