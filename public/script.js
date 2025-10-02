@@ -3,7 +3,8 @@ let ws;
 let reconnectInterval;
 let currentStreamingSide = null;
 let streamingText = '';
-let streamingInterval = null;
+let streamBuffer = '';
+let bufferInterval = null;
 
 function connect() {
   ws = new WebSocket(`ws://${window.location.host}`);
@@ -53,61 +54,87 @@ function updateConnectionStatus(connected) {
   }
 }
 
-// Handle streaming text chunks
+// Handle streaming text chunks with buffering for smoother display
 function handleStreamChunk(data) {
   if (data.start) {
     currentStreamingSide = data.side;
     streamingText = '';
+    streamBuffer = '';
+    
+    // Clear any existing buffer interval
+    if (bufferInterval) {
+      clearInterval(bufferInterval);
+    }
 
     const container = document.getElementById(`${data.side}Arguments`);
+    const scrollContainer = container.closest('.debate-side');
     const argBox = document.createElement('div');
     argBox.className = 'argument-box streaming';
     argBox.id = `streaming-${data.side}`;
     container.appendChild(argBox);
 
-    // Auto-scroll to bottom
-    const scrollContainer = container.closest(".debate-side"); if (scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
-    setTimeout(() => { const sc = container.closest(".debate-side"); if (sc) sc.scrollTop = sc.scrollHeight; }, 100);
-    setTimeout(() => { const sc = container.closest(".debate-side"); if (sc) sc.scrollTop = sc.scrollHeight; }, 300);
+    // Auto-scroll to bottom of debate-side container
+    if (scrollContainer) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      setTimeout(() => { const sc = container.closest(.debate-side); if (sc) sc.scrollTop = sc.scrollHeight; }, 100);
+    }
+    
+    // Start buffer display interval (display buffered chunks every 100ms)
+    bufferInterval = setInterval(() => {
+      if (streamBuffer.length > 0) {
+        streamingText += streamBuffer;
+        streamBuffer = '';
+        
+        const argBox = document.getElementById(`streaming-${data.side}`);
+        if (argBox) {
+          argBox.innerHTML = `<div class=argument-text>${streamingText}<span class=typing-cursor></span></div>`;
+        }
+        
+        // Auto-scroll
+        const container = document.getElementById(`${data.side}Arguments`);
+        const scrollContainer = container.closest('.debate-side');
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
+      }
+    }, 100); // Display buffered text every 100ms
   }
 
   if (data.chunk) {
-    streamingText += data.chunk;
-    const argBox = document.getElementById(`streaming-${data.side}`);
-    if (argBox) {
-      argBox.innerHTML = `<div class="argument-text">${streamingText}<span class="typing-cursor"></span></div>`;
-    }
-
-    // Auto-scroll
-    const container = document.getElementById(`${data.side}Arguments`);
-    const scrollContainer = container.closest(".debate-side"); if (scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
-    setTimeout(() => { const sc = container.closest(".debate-side"); if (sc) sc.scrollTop = sc.scrollHeight; }, 100);
-    setTimeout(() => { const sc = container.closest(".debate-side"); if (sc) sc.scrollTop = sc.scrollHeight; }, 300);
+    // Add to buffer instead of displaying immediately
+    streamBuffer += data.chunk;
   }
 
   if (data.complete) {
+    // Flush any remaining buffer
+    if (streamBuffer.length > 0) {
+      streamingText += streamBuffer;
+      streamBuffer = '';
+    }
+    
+    // Clear interval
+    if (bufferInterval) {
+      clearInterval(bufferInterval);
+      bufferInterval = null;
+    }
+    
     const argBox = document.getElementById(`streaming-${data.side}`);
     if (argBox) {
       argBox.classList.remove('streaming');
       argBox.id = '';
-      argBox.innerHTML = `<div class="argument-text">${streamingText}</div>`;
+      argBox.innerHTML = `<div class=argument-text>${streamingText}</div>`;
     }
     currentStreamingSide = null;
     streamingText = '';
+    
+    // Final scroll to ensure everything is visible
+    const container = document.getElementById(`${data.side}Arguments`);
+    const scrollContainer = container.closest('.debate-side');
+    if (scrollContainer) {
+      setTimeout(() => { const sc = container.closest(.debate-side); if (sc) sc.scrollTop = sc.scrollHeight; }, 200);
+    }
   }
 }
-
-// Show coin flip animation
-function showCoinFlip(data) {
-  const coinFlipDisplay = document.getElementById('coinFlipDisplay');
-  const coinFlipResult = document.getElementById('coinFlipResult');
-
-  coinFlipDisplay.classList.remove('hidden');
-  coinFlipResult.textContent = '';
-  coinFlipResult.className = 'coin-flip-result flipping';
-
-  // Matrix-style random characters
-  const chars = '01PROCON';
   let iterations = 0;
   const maxIterations = 15;
 
