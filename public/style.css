@@ -10,7 +10,7 @@ body {
   * { cursor: none !important; }
   cursor: none !important;
   
-  font-family: "Noto Color Emoji", 'Courier New', monospace;
+  font-family: 'Courier New', monospace;
   background: #000000;
   color: #00ff00;
   min-height: 100vh;
@@ -722,7 +722,7 @@ body.glitching::after {
 
 /* Moderator Messages */
 .moderator-message {
-  font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", monospace;
+  font-family: monospace;
   position: fixed;
   top: 80px;
   left: 50%;

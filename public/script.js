@@ -568,13 +568,27 @@ function scheduleGlitch() {
 
 // Start glitch scheduling
 scheduleGlitch();
+// Track if winner has been shown
+let lastWinnerShown = null;
 
 // Initialize connection
 // connect(); // WebSocket disabled
 function pollState() {
-  fetch('/api/state').then(r => r.json()).then(data => {
+  fetch(/api/state).then(r => r.json()).then(data => {
     if (!data) return;
-    if (data.winner) showWinner(data.winner);
+    
+    // Only show winner if it's new (different timestamp or first time)
+    if (data.winner) {
+      const winnerKey = `${data.winner.winner}_${data.winner.winnerName}_${data.turnNumber}`;
+      if (winnerKey !== lastWinnerShown) {
+        showWinner(data.winner);
+        lastWinnerShown = winnerKey;
+      }
+    } else {
+      // Reset when no winner (new debate started)
+      lastWinnerShown = null;
+    }
+    
     updateUI(data);
   }).catch(e => console.error(e));
 }

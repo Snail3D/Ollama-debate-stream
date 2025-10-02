@@ -665,7 +665,7 @@ async function callGroqStream(prompt, model, onChunk) {
       messages: [{ role: "user", content: prompt }],
       model: model || config.groqModel,
       temperature: 0.8,
-      max_tokens: 75,
+      max_tokens: 150,
       stream: true
     });
 
@@ -703,7 +703,7 @@ async function callGroq(prompt, model) {
       messages: [{ role: "user", content: prompt }],
       model: model || config.groqModel,
       temperature: 0.8,
-      max_tokens: 75
+      max_tokens: 150
     });
 
     return response.choices[0]?.message?.content || "";
