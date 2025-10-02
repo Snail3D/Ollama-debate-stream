@@ -192,7 +192,7 @@ async function showBibleVerse(data) {
   const textEl = document.getElementById("bibleVerseText");
   const refEl = document.getElementById("bibleVerseReference");
   
-  if (\!display || \!contentEl || \!textEl || \!refEl || \!data.verse) return;
+  if (!display || !contentEl || !textEl || !refEl || !data.verse) return;
   
   // Set content immediately
   textEl.textContent = data.verse.text;

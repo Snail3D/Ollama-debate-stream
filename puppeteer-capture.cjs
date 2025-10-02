@@ -57,7 +57,7 @@ const puppeteer = require("puppeteer");
   // Force reload once more
   await page.reload({ waitUntil: "networkidle2" });
   
-  console.log("Page loaded and reloaded\!");
+  console.log("Page loaded and reloaded!");
   
   // Function to hide cursor
   const hideCursor = async () => {
@@ -70,10 +70,10 @@ const puppeteer = require("puppeteer");
       document.body.style.cursor = "none";
       document.documentElement.style.cursor = "none";
       // Inject CSS if not already present
-      if (\!document.getElementById("hide-cursor-style")) {
+      if (!document.getElementById("hide-cursor-style")) {
         const style = document.createElement("style");
         style.id = "hide-cursor-style";
-        style.textContent = "* { cursor: none \!important; } body, html { cursor: none \!important; }";
+        style.textContent = "* { cursor: none !important; } body, html { cursor: none !important; }";
         document.head.appendChild(style);
       }
     });
