@@ -67,6 +67,11 @@ function checkPortInUse(port) {
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+// Log all requests
+app.use((req, res, next) => {
+  console.log(`[HTTP] ${req.method} ${req.url}`);
+  next();
+});
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -245,14 +250,10 @@ function getRandomHook(category) {
 
 // Bot chat responses
 async function postBotMessage(text) {
-  const CHAR_DELAY = 60; // 60ms per character for SnailBot messages
-  
-  // Add message with empty text initially
   debateState.chatMessages.push({
-    username: 'SnailBot',
-    text: '',
-    timestamp: Date.now(),
-    streaming: true
+    username: "SnailBot",
+    text: text,
+    timestamp: Date.now()
   });
   
   // Keep only last 50 messages
@@ -260,20 +261,7 @@ async function postBotMessage(text) {
     debateState.chatMessages = debateState.chatMessages.slice(-50);
   }
   
-  const messageIndex = debateState.chatMessages.length - 1;
-  let currentText = '';
-  // Type out character by character
-  for (let i = 0; i < text.length; i++) {
-    currentText += text[i];
-    debateState.chatMessages[messageIndex].text = currentText;
-    broadcastState();
-    await new Promise(resolve => setTimeout(resolve, CHAR_DELAY));
-  }
-  
-  // Mark as complete
-  delete debateState.chatMessages[messageIndex].streaming;
   broadcastState();
-  
   console.log(`Bot message: ${text}`);
 }
 
@@ -497,6 +485,7 @@ RULES:
 3. Stay in character with your personality
 4. Defend SnailBot if being questioned or criticized
 
+6. NEVER use "oh my god", "omg", or take the Lord's name in vain - use "oh my gosh", "wow", "seriously" instead
 
 5. Be helpful but brief - this is chat, not a debate
 
@@ -523,7 +512,7 @@ Response:`;
     
     if (chatResponse) {
       // Stream the response character-by-character (slower than debate - 80ms per char)
-      await streamChatResponse(chatResponse);
+      await postBotMessage(chatResponse);
     } else {
       await postBotMessage(`@${username} ${personality.name} is thinking...`);
     }
@@ -740,6 +729,7 @@ DEBATE RULES (ENFORCE STRICTLY):
 2. Keep it SHORT - 2-3 sentences MAX (50-60 words)
 3. No ad hominem attacks or name-calling
 4. Stay on topic
+7. NEVER use "oh my god", "omg", or take the Lord's name in vain - use alternatives
 5. Use logic, evidence, and reasoning
 6. IF opponent breaks a rule, call it out IMMEDIATELY
 
@@ -1052,6 +1042,8 @@ function broadcastToAll(data) {
 function broadcastState() {
   const state = {
     topic: debateState.currentTopic,
+    personality1: debateState.personality1,
+    personality2: debateState.personality2,
     side: debateState.currentSide,
     turnNumber: debateState.turnNumber,
     history: debateState.history, // Keep isNew flags for typewriter effect
@@ -1071,6 +1063,8 @@ wss.on('connection', (ws) => {
 
   // Send current state - remove isNew flags so existing arguments don't re-type on refresh
   ws.send(JSON.stringify({
+    personality1: debateState.personality1,
+    personality2: debateState.personality2,
     topic: debateState.currentTopic,
     side: debateState.currentSide,
     turnNumber: debateState.turnNumber,
@@ -1173,6 +1167,33 @@ app.get("/terminal", (req, res) => {
 </html>`);
 });
 
+// API endpoint for random Bible verse
+app.get("/api/random-verse", (req, res) => {
+  if (BIBLE_VERSES && BIBLE_VERSES.length > 0) {
+    const randomVerse = BIBLE_VERSES[Math.floor(Math.random() * BIBLE_VERSES.length)];
+    res.json({ verse: randomVerse });
+  } else {
+    res.json({ verse: null });
+  }
+});
+
+
+// API endpoint for polling state (fallback when WebSocket unavailable)
+app.get("/api/state", (req, res) => {
+  res.json({
+    personality1: debateState.personality1,
+    personality2: debateState.personality2,
+    topic: debateState.currentTopic,
+    side: debateState.currentSide,
+    turnNumber: debateState.turnNumber,
+    history: debateState.history,
+    mode: debateState.mode,
+    queueLength: debateState.queue.length,
+    queue: debateState.queue,
+    moderatorMessage: debateState.moderatorMessage,
+    chatMessages: debateState.chatMessages
+  });
+});
 app.get("/stream", (req, res) => {
   const p1 = debateState.personality1 || { name: "Debater One", color: "#00ff00" };
   const p2 = debateState.personality2 || { name: "Debater Two", color: "#ff6b6b" };

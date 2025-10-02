@@ -85,13 +85,13 @@ function handleStreamChunk(data) {
     const argBox = document.getElementById(`streaming-${data.side}`);
     if (argBox) {
       // Update text content without touching cursor element
-      let textDiv = argBox.querySelector(.argument-text);
-      let cursor = argBox.querySelector(.typing-cursor);
+      let textDiv = argBox.querySelector('.argument-text');
+      let cursor = argBox.querySelector('.typing-cursor');
       
       if (!textDiv) {
         argBox.innerHTML = `<div class="argument-text"></div><span class="typing-cursor"></span>`;
-        textDiv = argBox.querySelector(.argument-text);
-        cursor = argBox.querySelector(.typing-cursor);
+        textDiv = argBox.querySelector('.argument-text');
+        cursor = argBox.querySelector('.typing-cursor');
       }
       
       textDiv.textContent = streamingText;
@@ -261,8 +261,12 @@ function showWinner(data) {
   const winnerSide = document.getElementById('winnerSide');
   const winnerReason = document.getElementById('winnerReason');
 
-  winnerSide.textContent = data.winner.toUpperCase();
-  winnerSide.className = `winner-side ${data.winner}`;
+  // Map winner to personality name
+  const winnerPersonality = data.winner === "side1" ? debateState.personality1 : debateState.personality2;
+  const winnerName = winnerPersonality ? winnerPersonality.name.toUpperCase() : data.winner.toUpperCase();
+  
+  winnerSide.textContent = winnerName;
+  winnerSide.className = "winner-side " + data.winner;
 
   // Typewriter effect for the reason
   winnerReason.textContent = '';
@@ -569,3 +573,74 @@ scheduleGlitch();
 
 // Initialize connection
 connect();
+// HTTP Polling fallback
+let pollInterval;
+function pollState() {
+  fetch("/api/state").then(r => r.json()).then(data => {
+    if (data) {
+      updateUI(data);
+      if (data.queue) {
+        debateState.queue = data.queue;
+        updateTickerWithVerse();
+      }
+    }
+  }).catch(e => console.error(e));
+}
+
+setTimeout(() => {
+  if (!ws || ws.readyState !== 1) {
+    console.log("Using HTTP polling");
+    updateConnectionStatus(true);
+    pollInterval = setInterval(pollState, 1000);
+  }
+}, 3000);
+
+// Bible verse ticker rotation (every 5 minutes)
+let currentVerseInTicker = null;
+
+async function rotateBibleVerseInTicker() {
+  try {
+    const response = await fetch("/api/random-verse");
+    const data = await response.json();
+    if (data.verse) {
+      currentVerseInTicker = data.verse;
+      updateTickerWithVerse();
+    }
+  } catch (error) {
+    console.error("Error fetching verse for ticker:", error);
+  }
+}
+
+function updateTickerWithVerse() {
+  const ticker = document.getElementById("queueTicker");
+  if (!ticker) return;
+  
+  const currentQueue = debateState.queue || [];
+  let content = "";
+  
+  if (currentQueue.length > 0) {
+    const items = currentQueue.map((item, index) =>
+      "<span>UP NEXT #" + (index + 1) + ": " + item.topic + "</span>"
+    ).join("");
+    content = items;
+  } else {
+    content = "<span>[ NO DEBATES IN QUEUE ]</span>";
+  }
+  
+  // Insert Bible verse
+  if (currentVerseInTicker) {
+    content += "<span style=\"color: #ffff00; text-shadow: 0 0 15px #ffff00;\">📖 " + currentVerseInTicker.text + " — " + currentVerseInTicker.reference + "</span>";
+  }
+  
+  content += "<span>••• LIKE & SUBSCRIBE FOR MORE AI DEBATES!</span>";
+  
+  // Duplicate 3x for smooth scrolling
+  ticker.innerHTML = content + content + content;
+}
+
+// Start Bible verse rotation
+rotateBibleVerseInTicker();
+setInterval(rotateBibleVerseInTicker, 300000); // Every 5 minutes
+
+// HTTP Polling fallback
+setInterval(rotateBibleVerseInTicker, 300000); // Every 5 minutes
