@@ -101,8 +101,12 @@ function handleStreamChunk(data) {
         const container = document.getElementById(`${data.side}Arguments`);
         const sideDiv = argBox.closest(".debate-side");
         
-        if (container) container.scrollTop = container.scrollHeight;
-        if (sideDiv) sideDiv.scrollTop = sideDiv.scrollHeight;
+        if (sideDiv) {
+          // Use requestAnimationFrame for smoother scrolling
+          requestAnimationFrame(() => {
+            sideDiv.scrollTop = sideDiv.scrollHeight;
+          });
+        }
       }
     }
   }
@@ -579,7 +583,7 @@ function pollState() {
     
     // Only show winner if it's new (different timestamp or first time)
     if (data.winner) {
-      const winnerKey = `${data.winner.winner}_${data.winner.winnerName}_${data.turnNumber}`;
+      const winnerKey = `${data.winner.winnerName}_${data.winner.reason}`;
       if (winnerKey !== lastWinnerShown) {
         showWinner(data.winner);
         lastWinnerShown = winnerKey;
