@@ -353,7 +353,7 @@ function updateUI(state) {
 
   // Update queue ticker
   if (state.queue) {
-    updateQueueTicker(state.queue, state.tickerVerse);
+    updateQueueTicker(state.queue);
   }
 
   // Update chat messages
@@ -369,7 +369,7 @@ function updateUI(state) {
   }
 }
 
-function updateQueueTicker(queue, tickerVerse) {
+function updateQueueTicker(queue) {
   const ticker = document.getElementById('queueTicker');
 
   if (!queue || queue.length === 0) {
@@ -382,11 +382,8 @@ function updateQueueTicker(queue, tickerVerse) {
     `<span>UP NEXT #${index + 1}: ${item.topic}</span>`
   ).join('');
 
-  // Add Bible verse if available
-  const verseSpan = (tickerVerse && tickerVerse.text) ? `<span>••• "${tickerVerse.text}" - ${tickerVerse.reference}</span>` : "";
-
   // Add like & subscribe message at the end
-  const fullContent = items + verseSpan + '<span>••• LIKE & SUBSCRIBE FOR MORE AI DEBATES!</span>';
+  const fullContent = items + '<span>••• LIKE & SUBSCRIBE FOR MORE AI DEBATES!</span>';
 
   // Duplicate 3x for consistent speed regardless of content length
   ticker.innerHTML = fullContent + fullContent + fullContent;

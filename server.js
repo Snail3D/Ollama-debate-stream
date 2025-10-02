@@ -1204,7 +1204,8 @@ app.get("/api/state", (req, res) => {
     queueLength: debateState.queue.length,
     queue: debateState.queue,
     moderatorMessage: debateState.moderatorMessage,
-    chatMessages: debateState.chatMessages
+    chatMessages: debateState.chatMessages,
+    tickerVerse: getRandomBibleVerse() // Rotate Bible verse on each request
   });
 });
 app.get("/stream", (req, res) => {
