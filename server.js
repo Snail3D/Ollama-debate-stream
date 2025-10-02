@@ -37,6 +37,21 @@ function getRandomPersonalities() {
 }
 
 
+// Load Bible verses
+let BIBLE_VERSES = [];
+try {
+  const bibleData = fs.readFileSync('./bible-verses.json', 'utf8');
+  BIBLE_VERSES = JSON.parse(bibleData);
+  console.log(`✅ Loaded ${BIBLE_VERSES.length} Bible verses`);
+} catch (error) {
+  console.error('❌ Failed to load Bible verses:', error.message);
+}
+
+function getRandomBibleVerse() {
+  if (BIBLE_VERSES.length === 0) return null;
+  return BIBLE_VERSES[Math.floor(Math.random() * BIBLE_VERSES.length)];
+}
+
 // Check if port is already in use
 function checkPortInUse(port) {
   return new Promise((resolve) => {
@@ -167,7 +182,7 @@ const botHooks = {
     'LIVE NOW - DEBATE #{count}: {topic} ({mode})',
     'New debate #{count} starting: "{topic}" ({mode})',
     '🎬 Rolling! Debate #{count}: {topic} ({mode})',
-    '📣 Debate #{count} begins: "{topic}" ({mode})',
+    'Debate #{count} begins: "{topic}" ({mode})',
     'Next up - Debate #{count}: {topic} ({mode})'
   ],
   instructions: [
@@ -959,6 +974,30 @@ async function debateLoop() {
     const winnerSide = result.winner.toUpperCase();
     postBotMessage(`Debate concluded! Winner: ${winnerSide} - ${result.reason}`);
 
+    // Wait 10 seconds before Bible verse
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    
+    // Display Bible verse during cool down
+    const verse = getRandomBibleVerse();
+    if (verse) {
+      console.log(`Displaying Bible verse: ${verse.reference}`);
+      broadcastToAll({
+        type: 'bibleVerse',
+        verse: verse
+      });
+      
+      // Calculate display time: verse typing (50ms/char) + reference (500ms) + reading time
+      const typingTime = verse.text.length * 50;
+      const wordsCount = verse.text.split(' ').length;
+      const readingTime = Math.max(10000, (wordsCount / 200) * 60 * 1000);
+      const totalTime = typingTime + 500 + readingTime;
+      
+      // Wait for verse to be fully displayed and read
+      await new Promise(resolve => setTimeout(resolve, totalTime));
+    } else {
+      // Fallback if no verse available
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
     // Wait 10 seconds before starting new debate
     await new Promise(resolve => setTimeout(resolve, 10000));
 

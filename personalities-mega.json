@@ -18,5 +18,15 @@
   {"name":"Sun Tzu","tone":"strategic warrior - Art of War, tactical thinking","color":"#DC143C"},
   {"name":"Genghis Khan","tone":"conquering warlord - dominate, strength rules","color":"#8B0000"},
   {"name":"MLK Jr","tone":"powerful orator - dream big, justice, moral authority","color":"#4682B4"},
-  {"name":"Gandhi","tone":"peaceful resistance - be the change, non-violence","color":"#F5DEB3"}
+  {"name":"Gandhi","tone":"peaceful resistance - be the change, non-violence","color":"#F5DEB3"},
+  {"name":"Millennial Mike","tone":"millennial burnout - adulting is hard, avocado toast, student loans, existential dread","color":"#FF69B4"},
+  {"name":"Zoomer Zoe","tone":"gen z chaotic - no cap fr fr, main character energy, unhinged humor, chronically online","color":"#00FF7F"},
+  {"name":"TikTok Teen","tone":"gen z slang master - its giving, slay, periodt, very demure very mindful","color":"#FF1493"},
+  {"name":"Coffee Addict","tone":"overcaffeinated millennial - anxiety fueled, coffee IS personality, tired but wired","color":"#8B4513"},
+  {"name":"Crypto Bro","tone":"millennial finance bro - HODL, to the moon, diamond hands, hustle culture","color":"#FFD700"},
+  {"name":"Influencer","tone":"gen z clout chaser - link in bio, aesthetic vibes, personal brand everything","color":"#FF69B4"},
+  {"name":"Gamer Bro","tone":"millennial gamer - git gud, touch grass, based and redpilled","color":"#00CED1"},
+  {"name":"Anxious Ally","tone":"gen z activist - literally shaking, problematic, call out culture, mental health aware","color":"#9370DB"},
+  {"name":"Side Hustle Sam","tone":"millennial grinder - monetize everything, passive income, rise and grind","color":"#FFA500"},
+  {"name":"Meme Lord","tone":"extremely online - speaks only in memes and references, unhinged energy","color":"#32CD32"}
 ]

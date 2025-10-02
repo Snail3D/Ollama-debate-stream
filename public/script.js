@@ -20,6 +20,8 @@ function connect() {
     if (data.type === 'stream') {
       handleStreamChunk(data);
     } else if (data.type === 'upNext') {
+    } else if (data.type === 'bibleVerse') {
+      showBibleVerse(data.verse);
       showUpNextAnnouncement(data);
     } else if (data.type === 'winner') {
       showWinner(data);
@@ -177,6 +179,47 @@ function showUpNextAnnouncement(data) {
       announcement.classList.add('hidden');
     }, 4000);
   }
+}
+// Display Bible verse with typing animation
+async function showBibleVerse(verse) {
+  const display = document.getElementById("bibleVerseDisplay");
+  const textEl = document.getElementById("bibleVerseText");
+  const refEl = document.getElementById("bibleVerseReference");
+  
+  if (!display || !textEl || !refEl || !verse) return;
+  
+  // Clear previous content
+  textEl.innerHTML = "";
+  refEl.textContent = "";
+  
+  // Show display
+  display.classList.remove("hidden");
+  
+  // Type out the verse text character by character (50ms per char)
+  const text = verse.text;
+  let currentText = "";
+  const CHAR_DELAY = 50; // 50ms per character
+  
+  for (let i = 0; i < text.length; i++) {
+    currentText += text[i];
+    textEl.innerHTML = currentText + "<span class=\"bible-verse-typing-cursor\"></span>";
+    await new Promise(resolve => setTimeout(resolve, CHAR_DELAY));
+  }
+  
+  // Remove cursor
+  textEl.innerHTML = currentText;
+  
+  // Show reference after small pause
+  await new Promise(resolve => setTimeout(resolve, 500));
+  refEl.textContent = "- " + verse.reference;
+  
+  // Keep visible for reading time (based on verse length - roughly 200 words per minute)
+  const wordsCount = text.split(" ").length;
+  const readingTime = Math.max(10000, (wordsCount / 200) * 60 * 1000); // min 10 seconds
+  await new Promise(resolve => setTimeout(resolve, readingTime));
+  
+  // Hide display
+  display.classList.add("hidden");
 }
 function showWinner(data) {
   const winnerDisplay = document.getElementById('winnerDisplay');
