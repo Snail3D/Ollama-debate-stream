@@ -469,9 +469,15 @@ async function callOllamaStream(prompt, model, onChunk) {
       ],
       stream: true
       ,
+      options: {
+        num_predict: 150,
+        temperature: 0.8
+      }
+      ,
       keep_alive: 0
     }, {
-      responseType: 'stream'
+      responseType: "stream",
+      timeout: 30000
     });
 
     let fullResponse = '';
@@ -709,7 +715,34 @@ async function debateLoop() {
   );
 
   console.log('Calling Ollama...');
-  const response = await callOllama(prompt, config.ollamaModel);
+  
+  // Send start signal
+  broadcastToAll({
+    type: "stream",
+    start: true,
+    side: debateState.currentSide,
+    turn: debateState.turnNumber
+  });
+  
+  let response = "";
+  await callOllamaStream(prompt, config.ollamaModel, (chunk) => {
+    response += chunk;
+    broadcastToAll({
+      type: "stream",
+      chunk: chunk,
+      side: debateState.currentSide,
+      turn: debateState.turnNumber
+    });
+  });
+  
+  // Send complete signal
+  broadcastToAll({
+    type: "stream",
+    complete: true,
+    side: debateState.currentSide,
+    turn: debateState.turnNumber
+  });
+  
   console.log('Ollama response received:', response ? 'success' : 'failed');
 
   if (response) {

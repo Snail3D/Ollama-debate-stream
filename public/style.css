@@ -7,8 +7,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
 body {
+  cursor: none;
   
-  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-family: 'Share Tech Mono', 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
   background: #000000;
   color: #00ff00;
   min-height: 100vh;
