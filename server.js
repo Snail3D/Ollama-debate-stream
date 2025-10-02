@@ -111,6 +111,12 @@ let debateState = {
   debateCounter: 0 // Total debates completed
 };
 
+
+// Cache ticker verse for 30 minutes (1800 seconds) to prevent ticker jitter
+let cachedTickerVerse = null;
+let tickerVerseExpiry = 0;
+const TICKER_VERSE_CACHE_MS = 1800000; // 30 minutes (1800 seconds)
+
 // Load saved state if exists
 const STATE_FILE = './debate-state.json';
 if (fs.existsSync(STATE_FILE)) {
@@ -1205,7 +1211,14 @@ app.get("/api/state", (req, res) => {
     queue: debateState.queue,
     moderatorMessage: debateState.moderatorMessage,
     chatMessages: debateState.chatMessages,
-    tickerVerse: getRandomBibleVerse() // Rotate Bible verse on each request
+    tickerVerse: (() => {
+      const now = Date.now();
+      if (!cachedTickerVerse || now >= tickerVerseExpiry) {
+        cachedTickerVerse = getRandomBibleVerse();
+        tickerVerseExpiry = now + TICKER_VERSE_CACHE_MS;
+      }
+      return cachedTickerVerse;
+    })()
   });
 });
 app.get("/stream", (req, res) => {

@@ -3,8 +3,6 @@ let ws;
 let reconnectInterval;
 let currentStreamingSide = null;
 let streamingText = '';
-let lastQueueJSON = null;
-let lastTickerHTML = null;
 let streamingInterval = null;
 
 function connect() {
@@ -391,15 +389,7 @@ function updateQueueTicker(queue, tickerVerse) {
   const fullContent = items + verseSpan + '<span>••• LIKE & SUBSCRIBE FOR MORE AI DEBATES!</span>';
 
   // Duplicate 3x for consistent speed regardless of content length
-  // Duplicate 3x
-  const newHTML = fullContent + fullContent + fullContent;
-  // Only update if changed - prevents animation glitch
-  const queueJSON = JSON.stringify(queue);
-  if (newHTML !== lastTickerHTML || queueJSON !== lastQueueJSON) {
-    ticker.innerHTML = newHTML;
-    lastTickerHTML = newHTML;
-    lastQueueJSON = queueJSON;
-  }
+  ticker.innerHTML = fullContent + fullContent + fullContent;
 }
 
 function updateChatMessages(messages) {
