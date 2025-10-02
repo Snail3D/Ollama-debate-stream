@@ -80,21 +80,26 @@ function handleStreamChunk(data) {
     streamingText += data.chunk;
     const argBox = document.getElementById(`streaming-${data.side}`);
     if (argBox) {
-      argBox.innerHTML = `<div class="argument-text">${streamingText}<span class="typing-cursor"></span></div>`;
+      // Update text content without touching cursor element
+      let textDiv = argBox.querySelector(.argument-text);
+      let cursor = argBox.querySelector(.typing-cursor);
       
-      // Scroll less frequently to prevent cursor jumping
-      // Use requestAnimationFrame to smooth out scrolling
-      requestAnimationFrame(() => {
+      if (!textDiv) {
+        argBox.innerHTML = `<div class="argument-text"></div><span class="typing-cursor"></span>`;
+        textDiv = argBox.querySelector(.argument-text);
+        cursor = argBox.querySelector(.typing-cursor);
+      }
+      
+      textDiv.textContent = streamingText;
+      
+      // Only scroll every 10 characters to reduce jank
+      if (streamingText.length % 10 === 0) {
         const container = document.getElementById(`${data.side}Arguments`);
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
-        
         const sideDiv = argBox.closest(".debate-side");
-        if (sideDiv) {
-          sideDiv.scrollTop = sideDiv.scrollHeight;
-        }
-      });
+        
+        if (container) container.scrollTop = container.scrollHeight;
+        if (sideDiv) sideDiv.scrollTop = sideDiv.scrollHeight;
+      }
     }
   }
 

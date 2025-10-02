@@ -15,6 +15,28 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Diverse debate personalities  
+const PERSONALITIES = [
+  { name: "Professor", tone: "scholarly and intellectual - use academic language, cite logic and evidence", color: "#00ccff" },
+  { name: "Tyrone", tone: "street-smart and real - speak in AAVE/ebonics, keep it 100, use slang naturally", color: "#ff6600" },
+  { name: "Karen", tone: "entitled and demanding - speak to the manager energy, passive-aggressive, condescending", color: "#ff33cc" },
+  { name: "Brutus", tone: "aggressive and confrontational - military drill sergeant style, no nonsense, direct attacks", color: "#cc0000" },
+  { name: "Fabio", tone: "flamboyant and dramatic - over-the-top theatrical, uses metaphorical Italian hand gestures", color: "#9933ff" },
+  { name: "Grandma", tone: "sweet but wise - wholesome, uses old sayings, back-in-my-day vibes", color: "#ff99cc" },
+  { name: "Chad", tone: "bro culture and confident - alpha mindset, gym bro energy, uses bro/dude/gains metaphors", color: "#00ff99" },
+  { name: "Velma", tone: "nerdy and analytical - pop culture refs, awkward but brilliant, overthinks everything", color: "#ffcc00" },
+  { name: "Conspiracy Carl", tone: "paranoid and suspicious - questions everything, connects dots, wake up sheeple", color: "#ff3300" },
+  { name: "Zen Master", tone: "calm and philosophical - ancient wisdom, riddles and metaphors, very chill", color: "#33ccff" },
+  { name: "Edgelord", tone: "dark and nihilistic - pessimistic, sarcastic, nothing matters vibes", color: "#666666" },
+  { name: "Valley Girl", tone: "like totally basic - uses like/literally/omg, superficial but insightful", color: "#ff66cc" }
+];
+
+function getRandomPersonalities() {
+  const shuffled = [...PERSONALITIES].sort(() => Math.random() - 0.5);
+  return { side1: shuffled[0], side2: shuffled[1] };
+}
+
+
 // Check if port is already in use
 function checkPortInUse(port) {
   return new Promise((resolve) => {
@@ -53,7 +75,7 @@ const groq = new Groq({ apiKey: config.groqApiKey });
 // Debate state
 let debateState = {
   currentTopic: null,
-  currentSide: 'pro',
+  currentSide: 'side1',
   turnNumber: 0,
   history: [],
   mode: 'auto', // 'auto' or 'user'
@@ -337,6 +359,9 @@ function handleSuperChatMessage(username, message) {
 
   // Clear current debate and start superchat topic immediately
   debateState.currentTopic = message;
+  const personalities = getRandomPersonalities();
+  debateState.personality1 = personalities.side1;
+  debateState.personality2 = personalities.side2;
   debateState.history = [];
   debateState.turnNumber = 0;
   debateState.isProcessing = false;
@@ -520,7 +545,7 @@ async function callGroq(prompt, model) {
 
 // Generate debate response
 function generateDebateResponse(topic, side, turnNumber, previousArguments) {
-  const role = side === 'pro' ? 'supporting' : 'opposing';
+  const personality = side === 'side1' ? debateState.personality1 : debateState.personality2;
   const opponent = side === 'pro' ? 'opposition' : 'proponent';
 
   // Define distinct personalities
@@ -867,14 +892,9 @@ app.get('/api/state', (req, res) => {
 debateLoop();
 setInterval(debateLoop, config.debateInterval);
 
-// Start server with port check
-const portInUse = await checkPortInUse(config.port);
-if (portInUse) {
-  console.error(`\n❌ ERROR: Port ${config.port} is already in use!`);
-  console.error(`Another instance of the server is already running.`);
-  console.error(`Please stop the other instance first or use a different port.\n`);
-  process.exit(1);
-}
+// Port check disabled - just start the server
+// const portInUse = await checkPortInUse(config.port);
+// if (portInUse) { process.exit(1); }
 
 server.listen(config.port, () => {
   console.log(`Debate stream server running on http://localhost:${config.port}`);

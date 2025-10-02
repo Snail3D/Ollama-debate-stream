@@ -28,4 +28,4 @@ sleep 12
 MUSIC_LIST=$(find music -name "*.mp3" -not -name "._*" -not -name "._*" | shuf | paste -sd "|")
 
 # Capture screen + loop music at 60% volume with lower bitrate for stability
-ffmpeg -f x11grab -video_size 1920x1080 -framerate 30 -i :99.0 -stream_loop -1 -i "concat:$MUSIC_LIST" -filter_complex "[1:a]volume=0.6[a]" -map 0:v -map "[a]" -c:v libx264 -preset ultrafast -tune zerolatency -b:v 2500k -maxrate 2500k -bufsize 5000k -pix_fmt yuv420p -g 60 -keyint_min 60 -c:a aac -b:a 128k -ar 44100 -f flv "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_KEY"
+ffmpeg -f x11grab -video_size 1920x1080 -framerate 30 -i :99.0 -stream_loop -1 -i "concat:$MUSIC_LIST" -filter_complex "[1:a]volume=0.6[a]" -map 0:v -map "[a]" -c:v libx264 -preset ultrafast -tune zerolatency -b:v 2500k -maxrate 2500k -bufsize 10000k -pix_fmt yuv420p -g 60 -keyint_min 60 -c:a aac -b:a 128k -ar 44100 -f flv "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_KEY"

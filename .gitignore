@@ -7,3 +7,17 @@ server.pid
 npm-debug.log*
 music/
 *.tar.gz
+.env
+debate-state.json
+debateCounter.json
+daily-uptime.json
+*.backup
+daily-stats-email.sh
+send-daily-email.sh
+puppeteer-capture-debug.cjs
+puppeteer-capture-debug2.cjs
+stream-to-youtube-simple.sh
+test-emoji.html
+test-ollama.sh
+track-stats.js
+track-uptime.sh

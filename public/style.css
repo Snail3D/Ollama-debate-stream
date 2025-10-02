@@ -11,7 +11,7 @@ body {
   * { cursor: none !important; }
   cursor: none !important;
   
-  font-family: 'Share Tech Mono', 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
+  font-family: "Noto Color Emoji", 'Share Tech Mono', 'Courier New', monospace;
   background: #000000;
   color: #00ff00;
   min-height: 100vh;
@@ -725,7 +725,7 @@ body.glitching::after {
 
 /* Moderator Messages */
 .moderator-message {
-  font-family: 'Share Tech Mono', 'Courier New', monospace, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol';
+  font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", 'Share Tech Mono', monospace;
   position: fixed;
   top: 80px;
   left: 50%;
