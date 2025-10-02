@@ -151,60 +151,60 @@ setInterval(() => {
 // Bot announcement hooks - variety of phrases
 const botHooks = {
   superChatPromo: [
-    '💰 Want instant debate priority? Use SUPERCHAT to skip the queue!',
-    '🔥 SUPERCHATS get immediate attention - your debate starts NOW!',
-    '⚡ Skip the line! SUPERCHATS interrupt current debates instantly!',
-    '💸 Got a burning question? SUPERCHAT for instant debate priority!',
-    '🎯 SUPERCHATS = Instant priority! No waiting, just debating!',
-    '💎 Premium priority! SUPERCHAT to start your debate immediately!',
-    '🚀 SUPERCHATS launch debates instantly - no queue, no wait!',
+    'Want instant debate priority? Use SUPERCHAT to skip the queue!',
+    'SUPERCHATS get immediate attention - your debate starts NOW!',
+    'Skip the line! SUPERCHATS interrupt current debates instantly!',
+    'Got a burning question? SUPERCHAT for instant debate priority!',
+    'SUPERCHATS = Instant priority! No waiting, just debating!',
+    'Premium priority! SUPERCHAT to start your debate immediately!',
+    'SUPERCHATS launch debates instantly - no queue, no wait!',
     '👑 VIP treatment! SUPERCHAT to cancel current debate & start yours!',
     '⭐ Want the spotlight? SUPERCHAT for immediate debate action!',
     '💥 SUPERCHATS = Instant debates! Cut the line, start the discussion!'
   ],
   debateStart: [
-    '🎙️ DEBATE #{count}: "{topic}" ({mode})',
-    '🔴 LIVE NOW - DEBATE #{count}: {topic} ({mode})',
-    '⚔️ New debate #{count} starting: "{topic}" ({mode})',
+    'DEBATE #{count}: "{topic}" ({mode})',
+    'LIVE NOW - DEBATE #{count}: {topic} ({mode})',
+    'New debate #{count} starting: "{topic}" ({mode})',
     '🎬 Rolling! Debate #{count}: {topic} ({mode})',
     '📣 Debate #{count} begins: "{topic}" ({mode})',
-    '🌟 Next up - Debate #{count}: {topic} ({mode})'
+    'Next up - Debate #{count}: {topic} ({mode})'
   ],
   instructions: [
-    '💬 Use !debate [your question] to join the queue | 💰 SUPERCHATS skip ahead!',
-    '📝 Type !debate [question] to queue up | 💸 SUPERCHAT for instant priority!',
-    '✍️ Submit !debate [topic] to get in line | ⚡ SUPERCHATS go first!',
-    '💭 Queue your debate with !debate [question] | 🔥 SUPERCHAT = instant start!',
-    '🎤 Join queue: !debate [your topic] | 💎 SUPERCHAT = no waiting!'
+    'Use !debate [your question] to join the queue | SUPERCHATS skip ahead!',
+    'Type !debate [question] to queue up | SUPERCHAT for instant priority!',
+    'Submit !debate [topic] to get in line | SUPERCHATS go first!',
+    'Queue your debate with !debate [question] | SUPERCHAT = instant start!',
+    'Join queue: !debate [your topic] | SUPERCHAT = no waiting!'
   ],
   coolMessages: [
-    '🤖 Beep boop! AI debates are powered by local LLMs - no cloud needed!',
+    'Beep boop! AI debates are powered by local LLMs - no cloud needed!',
     '🧠 Did you know? These debates use llama-3.3-70b via Groq API!',
-    '⚡ Fun fact: Each argument takes about 2-3 seconds to generate!',
-    '🎭 The AI judge picks winners based on logic, evidence, and persuasiveness!',
-    '🌟 Loving the debates? Drop a like and subscribe for more AI battles!',
-    '🔥 These AIs never get tired - they can debate 24/7!',
-    '💭 Pro tip: More specific debate topics = better arguments!',
-    '🎯 The AI analyzes previous arguments to build stronger cases!',
-    '🚀 Each debate runs for 10 rounds before the judge decides!',
+    'Fun fact: Each argument takes about 2-3 seconds to generate!',
+    'The AI judge picks winners based on logic, evidence, and persuasiveness!',
+    'Loving the debates? Drop a like and subscribe for more AI battles!',
+    'These AIs never get tired - they can debate 24/7!',
+    'Pro tip: More specific debate topics = better arguments!',
+    'The AI analyzes previous arguments to build stronger cases!',
+    'Each debate runs for 10 rounds before the judge decides!',
     '🤯 Mind blown yet? This is all happening in real-time!',
-    '💡 Want to see YOUR question debated? Use !debate [your topic]!',
+    'Want to see YOUR question debated? Use !debate [your topic]!',
     '🎪 Welcome to the AI debate arena - where silicon meets rhetoric!',
-    '⚔️ May the best argument win! These AIs show no mercy!',
+    'May the best argument win! These AIs show no mercy!',
     '🌐 Running live from a Linode server streaming to YouTube!',
     '🎬 Lights, camera, DEBATE! Another round of AI vs AI!',
     '🔮 The future is now - watching AIs debate philosophy!',
     '💪 These language models are flexing their reasoning skills!',
     '🎲 Random topics or user requests - both get epic debates!',
-    '🏆 After 10 rounds, an AI judge crowns the champion!',
+    'After 10 rounds, an AI judge crowns the champion!',
     '✨ The magic of machine learning in action!'
   ],
   newUserWelcome: [
-    '👋 Welcome @{username}! Type !debate [your question] to join the debate queue! 💬',
-    '🎉 Hey @{username}! Want to see YOUR topic debated? Use !debate [topic] and we\'ll queue it up! ⚡',
-    '🌟 Welcome @{username}! Submit !debate [question] to queue your debate topic! 🎯',
-    '👏 @{username} just joined! Try !debate [any topic] to start an AI debate! 🤖',
-    '🚀 Welcome aboard @{username}! Use !debate [your topic] to get in the queue! Regular queue or SUPERCHAT for instant priority! 💰'
+    'Welcome @{username}! Type !debate [your question] to join the debate queue!',
+    'Hey @{username}! Want to see YOUR topic debated? Use !debate [topic] and we\'ll queue it up!',
+    'Welcome @{username}! Submit !debate [question] to queue your debate topic!',
+    '@{username} just joined! Try !debate [any topic] to start an AI debate!',
+    'Welcome aboard @{username}! Use !debate [your topic] to get in the queue! Regular queue or SUPERCHAT for instant priority!'
   ]
 };
 
@@ -302,7 +302,13 @@ if (config.youtubeApiKey && config.youtubeVideoId) {
 }
 
 // Handle superchat messages (priority)
+// Strip emojis from text
+function stripEmojis(text) {
+  return text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]|[\u{2300}-\u{23FF}]|[\u{2B50}]|[\u{FE0F}]|[\u{200D}]/gu, '');
+}
+
 function handleSuperChatMessage(username, message) {
+  message = stripEmojis(message);
   const filterResult = contentFilter.checkTopic(message);
 
   if (!filterResult.allowed) {
@@ -346,7 +352,7 @@ function handleSuperChatMessage(username, message) {
   }
 
   // Superchat IMMEDIATELY cancels current debate and starts new one
-  console.log(`💰 SUPERCHAT PRIORITY: Canceling current debate for ${username}`);
+  console.log(`SUPERCHAT PRIORITY: Canceling current debate for ${username}`);
 
   // Save current debate to front of regular queue if active
   if (debateState.currentTopic && debateState.history.length > 0) {
@@ -378,7 +384,7 @@ function handleSuperChatMessage(username, message) {
   broadcastState();
 
   // Show "SuperChat Debate Incoming!" animation
-  postBotMessage(`💰💥 SUPERCHAT DEBATE INCOMING! 💥💰 ${username} paid to debate: "${message}"`);
+  postBotMessage(`💰💥 SUPERCHAT DEBATE INCOMING! 💥${username} paid to debate: "${message}"`);
 
   setTimeout(() => {
     if (debateState.moderatorMessage?.timestamp === superChatTimestamp) {
@@ -393,6 +399,7 @@ function handleSuperChatMessage(username, message) {
 
 // Handle YouTube chat messages
 function handleYouTubeMessage(username, message) {
+  message = stripEmojis(message);
   const filterResult = contentFilter.checkTopic(message);
 
   if (!filterResult.allowed) {
@@ -546,36 +553,23 @@ async function callGroq(prompt, model) {
 // Generate debate response
 function generateDebateResponse(topic, side, turnNumber, previousArguments) {
   const personality = side === 'side1' ? debateState.personality1 : debateState.personality2;
-  const opponent = side === 'pro' ? 'opposition' : 'proponent';
+  const opponent = side === 'side1' ? 'opposition' : 'proponent';
 
-  // Define distinct personalities
-  let personality;
-  if (side === 'pro') {
-    // PRO: Optimistic, passionate, emotional, uses exclamations
-    const proStyles = [
-      'enthusiastic and hopeful - use exclamations and positive energy',
-      'fiery and righteous - speak with moral conviction',
-      'inspiring and motivational - rally people to your cause'
-    ];
-    personality = proStyles[turnNumber % proStyles.length];
-  } else {
-    // CON: Skeptical, analytical, pragmatic
-    const conStyles = [
-      'skeptical and questioning - use rhetorical questions and challenge assumptions',
-      'coldly analytical - dissect arguments with logic and evidence',
-      'pragmatic and realistic - focus on practical concerns and real-world implications'
-    ];
-    personality = conStyles[turnNumber % conStyles.length];
-  }
 
   let prompt = `Debate: "${topic}"
 
-You argue ${role}. Turn ${turnNumber}.
-PERSONALITY: Be ${personality}
+You are ${personality.name}. Turn ${turnNumber}.
+PERSONALITY: ${personality.tone}
 
-Make your response reflect this personality strongly. Challenge the ARGUMENT, not the person.
-MAXIMUM 4 sentences. Attack IDEAS, never the debater. Be intense and authentic to your personality.
+DEBATE RULES (ENFORCE STRICTLY):
+1. Attack IDEAS and ARGUMENTS, NEVER the person
+2. Keep it SHORT - 2-3 sentences MAX (50-60 words)
+3. No ad hominem attacks or name-calling
+4. Stay on topic
+5. Use logic, evidence, and reasoning
+6. IF opponent breaks a rule, call it out IMMEDIATELY
 
+Stay IN CHARACTER as ${personality.name}. Make ONE strong point in their style.
 `;
 
   if (previousArguments.length > 0) {
@@ -598,8 +592,8 @@ MAXIMUM 4 sentences. Attack IDEAS, never the debater. Be intense and authentic t
 
 // Judge the debate winner
 async function judgeDebate(topic, history) {
-  const proArgs = history.filter(h => h.side === 'pro').map(h => h.text).join('\n\n');
-  const conArgs = history.filter(h => h.side === 'con').map(h => h.text).join('\n\n');
+  const proArgs = history.filter(h => h.side === 'side1').map(h => h.text).join('\n\n');
+  const conArgs = history.filter(h => h.side === 'side2').map(h => h.text).join('\n\n');
 
   const judgePrompt = `You are an impartial debate judge. Analyze the following debate and determine the winner.
 
@@ -626,14 +620,14 @@ Provide ONLY the format above, nothing else.`;
   const response = await callGroq(judgePrompt, config.groqModel);
 
   if (!response) {
-    return { winner: 'pro', reason: 'Debate concluded.' };
+    return { winner: 'side1', reason: 'Debate concluded.' };
   }
 
   // Parse the response
   const winnerMatch = response.match(/WINNER:\s*(PRO|CON)/i);
   const reasonMatch = response.match(/REASON:\s*(.+?)(?:\n|$)/i);
 
-  const winner = winnerMatch ? winnerMatch[1].toLowerCase() : 'pro';
+  const winner = winnerMatch ? winnerMatch[1].toLowerCase() : 'side1';
   const reason = reasonMatch ? reasonMatch[1].trim() : 'Debate concluded.';
 
   return { winner, reason };
@@ -646,6 +640,13 @@ async function debateLoop() {
 
   debateState.isProcessing = true;
   console.log('Starting debate turn...');
+
+  // Ensure personalities are assigned (for resumed debates)
+  if (!debateState.personality1 || !debateState.personality2) {
+    const personalities = getRandomPersonalities();
+    debateState.personality1 = personalities.side1;
+    debateState.personality2 = personalities.side2;
+  }
 
   // Check if we need a new topic
   if (!debateState.currentTopic) {
@@ -671,13 +672,28 @@ async function debateLoop() {
     console.log('Topic:', debateState.currentTopic);
 
     // Randomly select who goes first
-    debateState.currentSide = Math.random() < 0.5 ? 'pro' : 'con';
+    debateState.currentSide = Math.random() < 0.5 ? 'side1' : 'side2';
     debateState.turnNumber = 0;
     debateState.history = [];
 
     console.log('Random selection:', debateState.currentSide, 'goes first');
 
+
+    // Assign random personalities for this debate
+    const personalities = getRandomPersonalities();
+    debateState.personality1 = personalities.side1;
+    debateState.personality2 = personalities.side2;
+    
+    // Broadcast upNext announcement
+    broadcastToAll({
+      type: 'upNext',
+      personality1: debateState.personality1,
+      personality2: debateState.personality2
+    });
     broadcastState();
+    
+    // Wait 4 seconds to let people see the announcement
+    await new Promise(resolve => setTimeout(resolve, 4000));
 
     // Increment debate counter
     debateState.debateCounter++;
@@ -788,7 +804,7 @@ async function debateLoop() {
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Switch sides
-    debateState.currentSide = debateState.currentSide === 'pro' ? 'con' : 'pro';
+    debateState.currentSide = debateState.currentSide === 'side1' ? 'side2' : 'side1';
   }
 
   // End debate after 10 turns and judge the winner

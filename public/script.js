@@ -19,6 +19,8 @@ function connect() {
 
     if (data.type === 'stream') {
       handleStreamChunk(data);
+    } else if (data.type === 'upNext') {
+      showUpNextAnnouncement(data);
     } else if (data.type === 'winner') {
       showWinner(data);
     } else {
@@ -154,6 +156,28 @@ function showCoinFlip(data) {
 }
 
 // Show winner screen
+
+function showUpNextAnnouncement(data) {
+  const announcement = document.getElementById('upNextAnnouncement');
+  const debater1 = document.getElementById('upNextDebater1');
+  const debater2 = document.getElementById('upNextDebater2');
+  
+  if (announcement && debater1 && debater2 && data.personality1 && data.personality2) {
+    debater1.textContent = data.personality1.name.toUpperCase();
+    debater1.style.color = data.personality1.color;
+    
+    debater2.textContent = data.personality2.name.toUpperCase();
+    debater2.style.color = data.personality2.color;
+    
+    // Show announcement
+    announcement.classList.remove('hidden');
+    
+    // Hide after 4 seconds
+    setTimeout(() => {
+      announcement.classList.add('hidden');
+    }, 4000);
+  }
+}
 function showWinner(data) {
   const winnerDisplay = document.getElementById('winnerDisplay');
   const winnerSide = document.getElementById('winnerSide');
@@ -213,11 +237,28 @@ function updateUI(state) {
   // Update moderator message
   updateModeratorMessage(state.moderatorMessage);
 
+
+  // Update personality labels
+  if (state.personality1) {
+    const side1Label = document.getElementById('side1Label');
+    if (side1Label) {
+      side1Label.textContent = state.personality1.name.toUpperCase();
+      side1Label.style.color = state.personality1.color;
+    }
+  }
+  
+  if (state.personality2) {
+    const side2Label = document.getElementById('side2Label');
+    if (side2Label) {
+      side2Label.textContent = state.personality2.name.toUpperCase();
+      side2Label.style.color = state.personality2.color;
+    }
+  }
   // Update turn indicators
   const proIndicator = document.getElementById('proIndicator');
   const conIndicator = document.getElementById('conIndicator');
 
-  if (state.side === 'pro') {
+  if (state.side === 'side1') {
     proIndicator.classList.add('active');
     conIndicator.classList.remove('active');
   } else {
@@ -349,8 +390,8 @@ function updateArguments(history) {
   }
 
   // Get pro and con arguments
-  const proArgs = history.filter(h => h.side === 'pro');
-  const conArgs = history.filter(h => h.side === 'con');
+  const proArgs = history.filter(h => h.side === 'side1');
+  const conArgs = history.filter(h => h.side === 'side2');
 
   // Update PRO arguments
   const proExisting = proContainer.querySelectorAll('.argument-box:not(.streaming)').length;
