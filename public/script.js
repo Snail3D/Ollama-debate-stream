@@ -261,7 +261,7 @@ function showWinner(data) {
   const winnerSide = document.getElementById('winnerSide');
   const winnerReason = document.getElementById('winnerReason');
 
-  winnerSide.textContent = data.winner.toUpperCase();
+  winnerSide.textContent = data.winnerName ? data.winnerName.toUpperCase() : data.winner.toUpperCase();
   winnerSide.className = `winner-side ${data.winner}`;
 
   // Typewriter effect for the reason

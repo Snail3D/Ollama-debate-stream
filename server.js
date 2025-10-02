@@ -755,7 +755,7 @@ Stay IN CHARACTER as ${personality.name}. Make ONE strong point in their style.
 }
 
 // Judge the debate winner
-async function judgeDebate(topic, history) {
+async function judgeDebate(topic, history, personality1, personality2) {
   const proArgs = history.filter(h => h.side === 'side1').map(h => h.text).join('\n\n');
   const conArgs = history.filter(h => h.side === 'side2').map(h => h.text).join('\n\n');
 
@@ -763,10 +763,10 @@ async function judgeDebate(topic, history) {
 
 DEBATE TOPIC: "${topic}"
 
-PRO ARGUMENTS:
+${personality1.name.toUpperCase()} (PRO SIDE) ARGUMENTS:
 ${proArgs}
 
-CON ARGUMENTS:
+${personality2.name.toUpperCase()} (CON SIDE) ARGUMENTS:
 ${conArgs}
 
 Based on:
@@ -776,7 +776,7 @@ Based on:
 4. Quality of rebuttals
 
 Respond in this EXACT format:
-WINNER: [PRO or CON]
+WINNER: [${personality1.name.toUpperCase()} or ${personality2.name.toUpperCase()}]
 REASON: [One clear sentence explaining why they won]
 
 Provide ONLY the format above, nothing else.`;
@@ -784,17 +784,32 @@ Provide ONLY the format above, nothing else.`;
   const response = await callGroq(judgePrompt, config.groqModel);
 
   if (!response) {
-    return { winner: 'side1', reason: 'Debate concluded.' };
+    return { winner: 'side1', reason: 'Debate concluded.', winnerName: personality1.name };
   }
 
-  // Parse the response
-  const winnerMatch = response.match(/WINNER:\s*(PRO|CON)/i);
+  // Parse the response - check for personality names first, then fallback to PRO/CON
+  let winner = 'side1';
+  let winnerName = personality1.name;
+  
+  if (response.toUpperCase().includes(`WINNER: ${personality1.name.toUpperCase()}`)) {
+    winner = 'side1';
+    winnerName = personality1.name;
+  } else if (response.toUpperCase().includes(`WINNER: ${personality2.name.toUpperCase()}`)) {
+    winner = 'side2';
+    winnerName = personality2.name;
+  } else {
+    // Fallback to PRO/CON matching
+    const winnerMatch = response.match(/WINNER:\s*(PRO|CON)/i);
+    if (winnerMatch) {
+      winner = winnerMatch[1].toUpperCase() === "PRO" ? 'side1' : 'side2';
+      winnerName = winner === 'side1' ? personality1.name : personality2.name;
+    }
+  }
+  
   const reasonMatch = response.match(/REASON:\s*(.+?)(?:\n|$)/i);
-
-  const winner = winnerMatch ? (winnerMatch[1].toUpperCase() === "PRO" ? "side1" : "side2") : "side1";
   const reason = reasonMatch ? reasonMatch[1].trim() : 'Debate concluded.';
 
-  return { winner, reason };
+  return { winner, reason, winnerName };
 }
 
 // Main debate loop
@@ -974,25 +989,27 @@ async function debateLoop() {
 
   // End debate after 10 turns and judge the winner
   if (debateState.turnNumber >= 10) {
-    const result = await judgeDebate(debateState.currentTopic, debateState.history);
+    const result = await judgeDebate(debateState.currentTopic, debateState.history, debateState.personality1, debateState.personality2);
     
     // Store winner in state for API polling
     debateState.winner = {
       type: "winner",
       winner: result.winner,
-      reason: result.reason
+      reason: result.reason,
+      winnerName: result.winnerName
     };
 
     // Broadcast winner
     broadcastToAll({
       type: 'winner',
       winner: result.winner,
-      reason: result.reason
+      reason: result.reason,
+      winnerName: result.winnerName
     });
 
     // Bot announces winner
     const winnerSide = result.winner.toUpperCase();
-    await postBotMessage(`Debate concluded! Winner: ${winnerSide} - ${result.reason}`);
+    await postBotMessage(`Debate concluded! Winner: ${result.winnerName.toUpperCase()} - ${result.reason}`);
 
     // Wait 10 seconds before Bible verse
     await new Promise(resolve => setTimeout(resolve, 10000));
