@@ -66,9 +66,9 @@ function handleStreamChunk(data) {
     container.appendChild(argBox);
 
     // Auto-scroll to bottom
-    container.scrollTop = container.scrollHeight;
-    setTimeout(() => container.scrollTop = container.scrollHeight, 100);
-    setTimeout(() => container.scrollTop = container.scrollHeight, 300);
+    const scrollContainer = container.closest(".debate-side"); if (scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    setTimeout(() => { const sc = container.closest(".debate-side"); if (sc) sc.scrollTop = sc.scrollHeight; }, 100);
+    setTimeout(() => { const sc = container.closest(".debate-side"); if (sc) sc.scrollTop = sc.scrollHeight; }, 300);
   }
 
   if (data.chunk) {
@@ -80,9 +80,9 @@ function handleStreamChunk(data) {
 
     // Auto-scroll
     const container = document.getElementById(`${data.side}Arguments`);
-    container.scrollTop = container.scrollHeight;
-    setTimeout(() => container.scrollTop = container.scrollHeight, 100);
-    setTimeout(() => container.scrollTop = container.scrollHeight, 300);
+    const scrollContainer = container.closest(".debate-side"); if (scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    setTimeout(() => { const sc = container.closest(".debate-side"); if (sc) sc.scrollTop = sc.scrollHeight; }, 100);
+    setTimeout(() => { const sc = container.closest(".debate-side"); if (sc) sc.scrollTop = sc.scrollHeight; }, 300);
   }
 
   if (data.complete) {
@@ -398,9 +398,9 @@ function typewriterEffect(element, text) {
       // Auto-scroll
       const container = element.closest('.debate-side');
       if (container) {
-        container.scrollTop = container.scrollHeight;
-    setTimeout(() => container.scrollTop = container.scrollHeight, 100);
-    setTimeout(() => container.scrollTop = container.scrollHeight, 300);
+        const scrollContainer = container.closest(".debate-side"); if (scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    setTimeout(() => { const sc = container.closest(".debate-side"); if (sc) sc.scrollTop = sc.scrollHeight; }, 100);
+    setTimeout(() => { const sc = container.closest(".debate-side"); if (sc) sc.scrollTop = sc.scrollHeight; }, 300);
       }
     } else {
       cursor.remove();
