@@ -1095,6 +1095,84 @@ app.post('/api/submit-topic', (req, res) => {
 });
 
 // Server-side rendered stream page (no WebSocket needed)
+// Server-side rendered terminal (original design, no WebSocket)
+app.get("/terminal", (req, res) => {
+  const p1 = debateState.personality1 || { name: "Side 1", color: "#00ff00" };
+  const p2 = debateState.personality2 || { name: "Side 2", color: "#ff6b6b" };
+  const history = debateState.history || [];
+  const topic = debateState.currentTopic || "INITIALIZING...";
+  const turnNumber = debateState.turnNumber || 0;
+  
+  const side1Args = history.filter(h => h.side === "side1").slice(-5).map((arg, i) => `
+    <div class="chat-message">
+      <div class="message-content">${arg.text}</div>
+    </div>
+  `).join("");
+  
+  const side2Args = history.filter(h => h.side === "side2").slice(-5).map((arg, i) => `
+    <div class="chat-message">
+      <div class="message-content">${arg.text}</div>
+    </div>
+  `).join("");
+  
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="refresh" content="3">
+  <title>Eternal Terminal</title>
+  <link rel="stylesheet" href="style.css">
+  <style>* { cursor: none !important; }</style>
+</head>
+<body>
+  <div class="container">
+    <div class="debate-arena">
+      <div class="debate-side pro-side">
+        <div class="side-header pro-header">
+          <div class="side-label" style="color: ${p1.color}">${p1.name.toUpperCase()}</div>
+          <div class="turn-indicator">●</div>
+        </div>
+        <div id="proArguments">${side1Args}</div>
+      </div>
+
+      <div class="center-column">
+        <div class="header-section">
+          <h1>█▓▒░ ETERNAL TERMINAL ░▒▓█</h1>
+          <div class="topic-info">
+            <div class="topic-label">[ DEBATE TOPIC ]</div>
+            <div class="topic-text">${topic}</div>
+          </div>
+          <div class="debate-info">
+            <div class="turn-counter-header">
+              ROUND <span>${turnNumber}</span>/10
+            </div>
+            <div class="mode-indicator">
+              <span>AUTO MODE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="debate-side con-side">
+        <div class="side-header con-header">
+          <div class="side-label" style="color: ${p2.color}">${p2.name.toUpperCase()}</div>
+          <div class="turn-indicator">●</div>
+        </div>
+        <div id="conArguments">${side2Args}</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="connection-status">
+        <span class="status-connected">● CONNECTED</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`);
+});
+
 app.get("/stream", (req, res) => {
   const p1 = debateState.personality1 || { name: "Debater One", color: "#00ff00" };
   const p2 = debateState.personality2 || { name: "Debater Two", color: "#ff6b6b" };

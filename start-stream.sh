@@ -17,7 +17,7 @@ export DISPLAY=:99
 sleep 3
 
 # Start Chromium directly (simpler than Puppeteer)
-chromium-browser --no-sandbox --disable-dev-shm-usage --disable-gpu --kiosk --start-fullscreen --window-size=1920,1080 --force-device-scale-factor=1 --disable-infobars --no-first-run http://localhost:3000 > /tmp/chromium.log 2>&1 &
+chromium-browser --no-sandbox --disable-dev-shm-usage --disable-gpu --kiosk --start-fullscreen --window-size=1920,1080 --force-device-scale-factor=1 --disable-infobars --no-first-run http://localhost:3000/terminal > /tmp/chromium.log 2>&1 &
 CHROME_PID=$!
 echo "Chromium started (PID: $CHROME_PID)"
 
