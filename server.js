@@ -471,7 +471,7 @@ async function callOllamaStream(prompt, model, onChunk) {
       stream: true
       ,
       options: {
-        num_predict: 75,
+        num_predict: 200,
         temperature: 0.8
       }
       ,
@@ -576,7 +576,7 @@ You argue ${role}. Turn ${turnNumber}.
 PERSONALITY: Be ${personality}
 
 Make your response reflect this personality strongly. Challenge the ARGUMENT, not the person.
-MAXIMUM 2 SHORT sentences. Attack IDEAS, never the debater. Be intense and authentic to your personality.
+MAXIMUM 4 sentences. Attack IDEAS, never the debater. Be intense and authentic to your personality.
 
 `;
 
