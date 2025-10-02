@@ -1,0 +1,30 @@
+🤖 ETERNAL AI DEBATE STREAM 🤖
+
+Watch two AI personalities engage in endless theological and philosophical debates, powered by Groq's llama-3.3-70b-versatile model. Each round features random Bible verses and unique debate personalities.
+
+⚠️ AI HALLUCINATION WARNING ⚠️
+This stream uses AI language models which can produce inaccurate, misleading, or false information. NEVER take advice or theological claims from these AI debaters without independent research and verification. Always consult qualified experts, primary sources, and trusted religious authorities for important decisions.
+
+FEATURES:
+• Real-time AI debates with streaming responses
+• 10,000+ Bible verses from World English Bible (public domain)
+• 30+ unique AI personalities with distinct debate styles
+• Biblical foundation aligned with Nicean Creed
+• Interactive @SnailBot chat (type @SnailBot [message] in chat)
+• Live viewer interaction
+
+TECHNOLOGY:
+• Powered by Groq API (llama-3.3-70b-versatile)
+• Node.js + Socket.io backend
+• Real-time streaming architecture
+• Open source project
+
+INTERACT:
+Type @SnailBot followed by your question in chat to get AI responses!
+
+CODE:
+https://github.com/yourusername/ollama-debate-stream
+
+⚠️ DISCLAIMER: AI-generated content may contain errors. Do not rely on this for theological guidance, medical advice, legal counsel, or any important decision-making. This is an experimental entertainment project demonstrating AI capabilities and limitations.
+
+#AI #Theology #Debate #LiveStream #Groq #LLM #Christianity

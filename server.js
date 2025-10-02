@@ -40,7 +40,7 @@ function getRandomPersonalities() {
 // Load Bible verses
 let BIBLE_VERSES = [];
 try {
-  const bibleData = fs.readFileSync('./bible-verses.json', 'utf8');
+  const bibleData = fs.readFileSync('./bible-verses-mega.json', 'utf8');
   BIBLE_VERSES = JSON.parse(bibleData);
   console.log(`✅ Loaded ${BIBLE_VERSES.length} Bible verses`);
 } catch (error) {
