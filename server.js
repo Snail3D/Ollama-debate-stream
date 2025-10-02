@@ -199,6 +199,17 @@ const botHooks = {
     'After 10 rounds, an AI judge crowns the champion!',
     '✨ The magic of machine learning in action!'
   ],
+  snailBotAlerts: [
+    'Got a question? Ask @SnailBot and one of the debaters will answer you!',
+    'Pro tip: Mention @SnailBot in chat and get a response from our AI personalities!',
+    'Want to chat with the AIs? Try @SnailBot [your question] in chat!',
+    'The debaters are watching chat! Tag @SnailBot to get their attention!',
+    'Curious about something? @SnailBot will have one of the personalities respond!',
+    '@SnailBot is here to help! Ask questions and the debaters will answer in character!',
+    'Chat with the AIs! Use @SnailBot [question] and get a personality-driven response!',
+    'The debaters defend SnailBot! Try @SnailBot in chat to see them in action!'
+  ],
+
   newUserWelcome: [
     'Welcome @{username}! Type !debate [your question] to join the debate queue!',
     'Hey @{username}! Want to see YOUR topic debated? Use !debate [topic] and we\'ll queue it up!',
@@ -217,7 +228,7 @@ function getRandomHook(category) {
 // Bot chat responses
 function postBotMessage(text) {
   debateState.chatMessages.push({
-    username: '[BOT]',
+    username: 'SnailBot',
     text,
     timestamp: Date.now()
   });
@@ -235,8 +246,14 @@ function postBotMessage(text) {
 setInterval(() => {
   const promoMessage = getRandomHook('superChatPromo');
   postBotMessage(promoMessage);
-  console.log('Posted periodic superchat promotion');
 }, 600000); // 10 minutes
+
+// Periodic @SnailBot alert (every 5 minutes)
+setInterval(() => {
+  const snailBotAlert = getRandomHook('snailBotAlerts');
+  postBotMessage(snailBotAlert);
+  console.log('Posted periodic @SnailBot alert');
+}, 300000); // 5 minutes
 
 // Random cool messages at varying intervals (3-7 minutes)
 function scheduleNextCoolMessage() {
@@ -384,7 +401,7 @@ function handleSuperChatMessage(username, message) {
   broadcastState();
 
   // Show "SuperChat Debate Incoming!" animation
-  postBotMessage(`💰💥 SUPERCHAT DEBATE INCOMING! 💥${username} paid to debate: "${message}"`);
+  postBotMessage(`SUPERCHAT DEBATE INCOMING! ${username} paid to debate: "${message}"`);
 
   setTimeout(() => {
     if (debateState.moderatorMessage?.timestamp === superChatTimestamp) {
@@ -397,9 +414,129 @@ function handleSuperChatMessage(username, message) {
   setTimeout(() => runDebateLoop(), 500);
 }
 
+// Handle @SnailBot mentions in chat
+async function handleSnailBotMention(username, message) {
+  console.log(`@SnailBot mentioned by ${username}: ${message}`);
+  
+  // Strip @SnailBot from the message to get the actual question
+  const question = message.replace(/@snailbot/gi, "").trim();
+  
+  // If there is no question, just acknowledge
+  if (!question || question.length < 3) {
+    postBotMessage(`@${username} Yes? I am here! Ask me something!`);
+    return;
+  }
+  
+  // Pick a random personality (prefer current debaters)
+  let personality;
+  if (debateState.personality1 && debateState.personality2 && Math.random() < 0.8) {
+    // 80% chance to use one of the current debaters
+    personality = Math.random() < 0.5 ? debateState.personality1 : debateState.personality2;
+  } else {
+    // 20% chance to use a random personality
+    const personalities = getRandomPersonalities();
+    personality = Math.random() < 0.5 ? personalities.side1 : personalities.side2;
+  }
+  
+  // Get recent chat context (last 5 messages)
+  const recentChat = debateState.chatMessages
+    .slice(-5)
+    .map(msg => `${msg.username}: ${msg.text}`)
+    .join("\n");
+  
+  // Generate response with personality defending/representing SnailBot
+  const prompt = `You are ${personality.name} responding in YouTube chat.
+
+PERSONALITY: ${personality.tone}
+
+CHAT CONTEXT:
+${recentChat}
+
+@${username} asked SnailBot: "${question}"
+
+Respond AS ${personality.name} (not as SnailBot). Defend/represent SnailBot if questioned. Be helpful and stay in character.
+
+RULES:
+1. Be VERY concise - 1-2 sentences MAX (20-30 words)
+2. Start with your name like "${personality.name}: YOUR RESPONSE HERE"
+3. Stay in character with your personality
+4. Defend SnailBot if being questioned or criticized
+5. Be helpful but brief - this is chat, not a debate
+
+Response:`;
+
+  try {
+    // Call Groq API
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: config.ollamaModel,
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 60,
+        temperature: 0.9
+      })
+    });
+
+    const data = await response.json();
+    const chatResponse = data.choices[0]?.message?.content?.trim() || "";
+    
+    if (chatResponse) {
+      // Stream the response character-by-character (slower than debate - 80ms per char)
+      await streamChatResponse(chatResponse);
+    } else {
+      postBotMessage(`@${username} ${personality.name} is thinking...`);
+    }
+    
+  } catch (error) {
+    console.error("Error generating @SnailBot response:", error);
+    postBotMessage(`@${username} ${personality.name} got distracted! Try again?`);
+  }
+}
+
+// Stream chat response character-by-character
+async function streamChatResponse(text) {
+  let currentText = "";
+  const CHAR_DELAY = 80; // 80ms per character (slower than debate)
+  
+  for (let i = 0; i < text.length; i++) {
+    currentText += text[i];
+    
+    // Update the last message in chat or create new one
+    if (i === 0) {
+      debateState.chatMessages.push({
+        username: "[TYPING...]",
+        text: currentText,
+        timestamp: Date.now(),
+        streaming: true
+      });
+    } else {
+      debateState.chatMessages[debateState.chatMessages.length - 1].text = currentText;
+    }
+    
+    broadcastState();
+    await new Promise(resolve => setTimeout(resolve, CHAR_DELAY));
+  }
+  
+  // Mark as complete
+  const lastMsg = debateState.chatMessages[debateState.chatMessages.length - 1];
+  delete lastMsg.streaming;
+  lastMsg.username = "AI Response";
+  
+  broadcastState();
+}
 // Handle YouTube chat messages
 function handleYouTubeMessage(username, message) {
   message = stripEmojis(message);
+  // Check for @SnailBot mention
+  if (message.toLowerCase().includes('@snailbot')) {
+    handleSnailBotMention(username, message);
+    return;
+  }
+
   const filterResult = contentFilter.checkTopic(message);
 
   if (!filterResult.allowed) {
@@ -580,7 +717,7 @@ Stay IN CHARACTER as ${personality.name}. Make ONE strong point in their style.
   }
 
   if (turnNumber === 1) {
-    prompt += `\nAs the ${role} side, present your opening argument.`;
+    prompt += `\nPresent your opening argument.`;
   } else {
     prompt += `\nRespond to the ${opponent}'s argument and present your next point.`;
   }
