@@ -574,7 +574,7 @@ let lastWinnerShown = null;
 // Initialize connection
 // connect(); // WebSocket disabled
 function pollState() {
-  fetch(/api/state).then(r => r.json()).then(data => {
+  fetch('/api/state').then(r => r.json()).then(data => {
     if (!data) return;
     
     // Only show winner if it's new (different timestamp or first time)
