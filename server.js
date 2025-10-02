@@ -763,10 +763,10 @@ async function judgeDebate(topic, history, personality1, personality2) {
 
 DEBATE TOPIC: "${topic}"
 
-${personality1.name.toUpperCase()} (PRO SIDE) ARGUMENTS:
+PRO ARGUMENTS:
 ${proArgs}
 
-${personality2.name.toUpperCase()} (CON SIDE) ARGUMENTS:
+CON ARGUMENTS:
 ${conArgs}
 
 Based on:
@@ -776,7 +776,7 @@ Based on:
 4. Quality of rebuttals
 
 Respond in this EXACT format:
-WINNER: [${personality1.name.toUpperCase()} or ${personality2.name.toUpperCase()}]
+WINNER: [PRO or CON]
 REASON: [One clear sentence explaining why they won]
 
 Provide ONLY the format above, nothing else.`;
@@ -787,28 +787,14 @@ Provide ONLY the format above, nothing else.`;
     return { winner: 'side1', reason: 'Debate concluded.', winnerName: personality1.name };
   }
 
-  // Parse the response - check for personality names first, then fallback to PRO/CON
-  let winner = 'side1';
-  let winnerName = personality1.name;
-  
-  if (response.toUpperCase().includes(`WINNER: ${personality1.name.toUpperCase()}`)) {
-    winner = 'side1';
-    winnerName = personality1.name;
-  } else if (response.toUpperCase().includes(`WINNER: ${personality2.name.toUpperCase()}`)) {
-    winner = 'side2';
-    winnerName = personality2.name;
-  } else {
-    // Fallback to PRO/CON matching
-    const winnerMatch = response.match(/WINNER:\s*(PRO|CON)/i);
-    if (winnerMatch) {
-      winner = winnerMatch[1].toUpperCase() === "PRO" ? 'side1' : 'side2';
-      winnerName = winner === 'side1' ? personality1.name : personality2.name;
-    }
-  }
-  
+  // Parse the response
+  const winnerMatch = response.match(/WINNER:\s*(PRO|CON)/i);
   const reasonMatch = response.match(/REASON:\s*(.+?)(?:\n|$)/i);
+
+  const winner = winnerMatch ? (winnerMatch[1].toUpperCase() === "PRO" ? "side1" : "side2") : "side1";
   const reason = reasonMatch ? reasonMatch[1].trim() : 'Debate concluded.';
 
+  const winnerName = winner === 'side1' ? personality1.name : personality2.name;
   return { winner, reason, winnerName };
 }
 
