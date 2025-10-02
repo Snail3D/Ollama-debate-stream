@@ -791,7 +791,7 @@ Provide ONLY the format above, nothing else.`;
   const winnerMatch = response.match(/WINNER:\s*(PRO|CON)/i);
   const reasonMatch = response.match(/REASON:\s*(.+?)(?:\n|$)/i);
 
-  const winner = winnerMatch ? winnerMatch[1].toLowerCase() : 'side1';
+  const winner = winnerMatch ? (winnerMatch[1].toUpperCase() === "PRO" ? "side1" : "side2") : "side1";
   const reason = reasonMatch ? reasonMatch[1].trim() : 'Debate concluded.';
 
   return { winner, reason };
@@ -815,6 +815,7 @@ async function debateLoop() {
   // Check if we need a new topic
   if (!debateState.currentTopic) {
     console.log('Creating new debate topic...');
+    debateState.winner = null; // Clear previous winner
     // Check queue first
     if (debateState.queue.length > 0) {
       const userRequest = debateState.queue.shift();
@@ -974,6 +975,13 @@ async function debateLoop() {
   // End debate after 10 turns and judge the winner
   if (debateState.turnNumber >= 10) {
     const result = await judgeDebate(debateState.currentTopic, debateState.history);
+    
+    // Store winner in state for API polling
+    debateState.winner = {
+      type: "winner",
+      winner: result.winner,
+      reason: result.reason
+    };
 
     // Broadcast winner
     broadcastToAll({
@@ -1183,6 +1191,7 @@ app.get("/api/state", (req, res) => {
   res.json({
     personality1: debateState.personality1,
     personality2: debateState.personality2,
+    winner: debateState.winner || null,
     topic: debateState.currentTopic,
     side: debateState.currentSide,
     turnNumber: debateState.turnNumber,

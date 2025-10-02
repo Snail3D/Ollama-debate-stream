@@ -85,13 +85,13 @@ function handleStreamChunk(data) {
     const argBox = document.getElementById(`streaming-${data.side}`);
     if (argBox) {
       // Update text content without touching cursor element
-      let textDiv = argBox.querySelector('.argument-text');
-      let cursor = argBox.querySelector('.typing-cursor');
+      let textDiv = argBox.querySelector(.argument-text);
+      let cursor = argBox.querySelector(.typing-cursor);
       
       if (!textDiv) {
         argBox.innerHTML = `<div class="argument-text"></div><span class="typing-cursor"></span>`;
-        textDiv = argBox.querySelector('.argument-text');
-        cursor = argBox.querySelector('.typing-cursor');
+        textDiv = argBox.querySelector(.argument-text);
+        cursor = argBox.querySelector(.typing-cursor);
       }
       
       textDiv.textContent = streamingText;
@@ -356,12 +356,10 @@ function updateUI(state) {
   if (state.chatMessages) {
     updateChatMessages(state.chatMessages);
   }
-  console.log("Updating chat with messages:", state.chatMessages.length);
 
   // Update arguments (only if not streaming)
   if (!currentStreamingSide) {
     updateArguments(state.history);
-  console.log("Updating arguments with history:", state.history);
   }
 }
 
@@ -570,14 +568,4 @@ function scheduleGlitch() {
 scheduleGlitch();
 
 // Initialize connection
-// connect(); // WebSocket disabled
-function pollState() {
-  fetch('/api/state').then(r => r.json()).then(data => {
-    if (!data) return;
-    if (data.winner) showWinner(data.winner);
-    updateUI(data);
-  }).catch(e => console.error(e));
-}
-updateConnectionStatus(true);
-setInterval(pollState, 1000);
-pollState();
+connect();

@@ -189,6 +189,7 @@ body.glitching::after {
 #queueIndicator {
   padding: 5px 15px;
   border: 1px solid #00ff00;
+  font-size: 1.5em;
   color: #ffff00;
   text-shadow: 0 0 5px #ffff00;
   display: none;
@@ -196,7 +197,7 @@ body.glitching::after {
 
 #queueIndicator.active {
   display: inline-block;
-  animation: blink 2.5s ease-in-out infinite;
+  animation: queueBlink 3s ease-in-out infinite;
 }
 
 /* Topic Section */
@@ -222,11 +223,13 @@ body.glitching::after {
 }
 
 .turn-counter-header {
-  font-size: 0.8em;
-  font-weight: bold;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 1.5em;
+  font-weight: 900;
   color: #00ff00;
   text-shadow: 0 0 10px #00ff00;
-  letter-spacing: 0.2em;
+  font-variant-numeric: tabular-nums;
+  
 }
 
 /* Debate Arena */
@@ -320,14 +323,6 @@ body.glitching::after {
   margin-top: 10px;
 }
 
-.turn-counter-header {
-  font-size: 0.8em;
-  font-weight: bold;
-  color: #00ff00;
-  text-shadow: 0 0 10px #00ff00;
-  letter-spacing: 0.2em;
-}
-
 .mode-indicator {
   display: flex;
   gap: 10px;
@@ -337,6 +332,7 @@ body.glitching::after {
 
 #queueIndicator {
   color: #ffff00;
+  font-size: 1.5em;
   font-weight: bold;
 }
 
@@ -498,6 +494,7 @@ body.glitching::after {
 
 .pro-header .side-label {
   text-shadow: 0 0 10px #00ff00;
+  font-variant-numeric: tabular-nums;
 }
 
 .turn-indicator {
@@ -623,7 +620,7 @@ body.glitching::after {
 }
 
 .winner-side {
-  font-size: 4em;
+  font-size: 2.4em;
   margin: 20px 0;
   font-weight: bold;
 }
@@ -707,6 +704,7 @@ body.glitching::after {
   font-size: 2em;
   letter-spacing: 0.2em;
   text-shadow: 0 0 10px #00ff00;
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes glitch {
@@ -798,7 +796,7 @@ body.glitching::after {
   white-space: nowrap;
   animation: scroll-left 240s linear infinite;
   color: #ffff00;
-  font-size: 4em;
+  font-size: 2.4em;
   font-weight: bold;
   text-shadow: 0 0 10px #ffff00;
 }
@@ -828,9 +826,12 @@ body.glitching::after {
 }
 
 /* Animations */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
+@keyframes queueBlink {
+  0% { opacity: 1; }
+  25% { opacity: 0.6; }
   50% { opacity: 0.3; }
+  75% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
 @keyframes pulse {
@@ -1054,4 +1055,14 @@ body.glitching::after {
 .bible-verse-content.fade-out {
   opacity: 0;
   transition: opacity 2s ease-out;
+}
+* { cursor: none \!important; }
+
+/* Fix number display - remove letter spacing from numbers */
+#turnNumberHeader,
+.turn-counter-header span,
+#queueIndicator {
+  letter-spacing: 0 !important;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "tnum", "lnum";
 }
