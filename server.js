@@ -241,32 +241,49 @@ function getRandomHook(category) {
 }
 
 // Bot chat responses
-function postBotMessage(text) {
+async function postBotMessage(text) {
+  const CHAR_DELAY = 60; // 60ms per character for SnailBot messages
+  
+  // Add message with empty text initially
   debateState.chatMessages.push({
     username: 'SnailBot',
-    text,
-    timestamp: Date.now()
+    text: '',
+    timestamp: Date.now(),
+    streaming: true
   });
-
+  
   // Keep only last 50 messages
   if (debateState.chatMessages.length > 50) {
     debateState.chatMessages = debateState.chatMessages.slice(-50);
   }
-
-  console.log(`Bot message: ${text}`);
+  
+  const messageIndex = debateState.chatMessages.length - 1;
+  let currentText = '';
+  // Type out character by character
+  for (let i = 0; i < text.length; i++) {
+    currentText += text[i];
+    debateState.chatMessages[messageIndex].text = currentText;
+    broadcastState();
+    await new Promise(resolve => setTimeout(resolve, CHAR_DELAY));
+  }
+  
+  // Mark as complete
+  delete debateState.chatMessages[messageIndex].streaming;
   broadcastState();
+  
+  console.log(`Bot message: ${text}`);
 }
 
 // Periodic superchat promotion (every 10 minutes)
-setInterval(() => {
+setInterval(async () => {
   const promoMessage = getRandomHook('superChatPromo');
-  postBotMessage(promoMessage);
+  await postBotMessage(promoMessage);
 }, 600000); // 10 minutes
 
 // Periodic @SnailBot alert (every 5 minutes)
-setInterval(() => {
+setInterval(async () => {
   const snailBotAlert = getRandomHook('snailBotAlerts');
-  postBotMessage(snailBotAlert);
+  await postBotMessage(snailBotAlert);
   console.log('Posted periodic @SnailBot alert');
 }, 300000); // 5 minutes
 
@@ -275,9 +292,9 @@ function scheduleNextCoolMessage() {
   // Random delay between 3-7 minutes (180000-420000ms)
   const delay = Math.floor(Math.random() * 240000) + 180000;
 
-  setTimeout(() => {
+  setTimeout(async () => {
     const coolMessage = getRandomHook('coolMessages');
-    postBotMessage(coolMessage);
+    await postBotMessage(coolMessage);
     console.log(`Posted cool message (next in ${Math.round(delay/60000)} mins)`);
 
     // Schedule the next one
@@ -310,8 +327,8 @@ function handleChatMessage(username, text) {
   if (!lastSeen || lastSeen < fortyEightHoursAgo) {
     seenUsernames.set(username, now);
     const welcomeMessage = getRandomHook('newUserWelcome').replace('{username}', username);
-    setTimeout(() => {
-      postBotMessage(welcomeMessage);
+    setTimeout(async () => {
+      await postBotMessage(welcomeMessage);
       console.log(`Welcomed new/returning user: ${username} (last seen: ${lastSeen ? new Date(lastSeen).toLocaleString() : 'never'})`);
     }, 2000); // 2 second delay so it doesn't overlap with their message
   } else {
@@ -339,7 +356,7 @@ function stripEmojis(text) {
   return text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]|[\u{2300}-\u{23FF}]|[\u{2B50}]|[\u{FE0F}]|[\u{200D}]/gu, '');
 }
 
-function handleSuperChatMessage(username, message) {
+async function handleSuperChatMessage(username, message) {
   message = stripEmojis(message);
   const filterResult = contentFilter.checkTopic(message);
 
@@ -416,7 +433,7 @@ function handleSuperChatMessage(username, message) {
   broadcastState();
 
   // Show "SuperChat Debate Incoming!" animation
-  postBotMessage(`SUPERCHAT DEBATE INCOMING! ${username} paid to debate: "${message}"`);
+  await postBotMessage(`SUPERCHAT DEBATE INCOMING! ${username} paid to debate: "${message}"`);
 
   setTimeout(() => {
     if (debateState.moderatorMessage?.timestamp === superChatTimestamp) {
@@ -438,7 +455,7 @@ async function handleSnailBotMention(username, message) {
   
   // If there is no question, just acknowledge
   if (!question || question.length < 3) {
-    postBotMessage(`@${username} Yes? I am here! Ask me something!`);
+    await postBotMessage(`@${username} Yes? I am here! Ask me something!`);
     return;
   }
   
@@ -503,12 +520,12 @@ Response:`;
       // Stream the response character-by-character (slower than debate - 80ms per char)
       await streamChatResponse(chatResponse);
     } else {
-      postBotMessage(`@${username} ${personality.name} is thinking...`);
+      await postBotMessage(`@${username} ${personality.name} is thinking...`);
     }
     
   } catch (error) {
     console.error("Error generating @SnailBot response:", error);
-    postBotMessage(`@${username} ${personality.name} got distracted! Try again?`);
+    await postBotMessage(`@${username} ${personality.name} got distracted! Try again?`);
   }
 }
 
@@ -857,7 +874,7 @@ async function debateLoop() {
       .replace('{topic}', debateState.currentTopic)
       .replace('{mode}', mode);
     const instructions = getRandomHook('instructions');
-    postBotMessage(`${debateAnnouncement} | ${instructions}`);
+    await postBotMessage(`${debateAnnouncement} | ${instructions}`);
 
     // Clear moderator message after 5 seconds
     setTimeout(() => {
@@ -972,25 +989,30 @@ async function debateLoop() {
 
     // Bot announces winner
     const winnerSide = result.winner.toUpperCase();
-    postBotMessage(`Debate concluded! Winner: ${winnerSide} - ${result.reason}`);
+    await postBotMessage(`Debate concluded! Winner: ${winnerSide} - ${result.reason}`);
 
     // Wait 10 seconds before Bible verse
     await new Promise(resolve => setTimeout(resolve, 10000));
     
     // Display Bible verse during cool down
     const verse = getRandomBibleVerse();
-    if (verse) {
+    const intro = getRandomVerseIntro();
+    if (verse && intro) {
       console.log(`Displaying Bible verse: ${verse.reference}`);
       broadcastToAll({
         type: 'bibleVerse',
-        verse: verse
+        verse: verse,
+        intro: intro
       });
       
-      // Calculate display time: verse typing (50ms/char) + reference (500ms) + reading time
-      const typingTime = verse.text.length * 50;
+      // Calculate display time: 
+      // intro typing (40ms/char) + 1s pause + 2s fade out + 2s fade in +
+      // verse typing (50ms/char) + reference (500ms) + reading time + 2s fade out
+      const introTime = (intro.length * 40) + 1000 + 2000 + 2000;
+      const verseTypingTime = verse.text.length * 50;
       const wordsCount = verse.text.split(' ').length;
       const readingTime = Math.max(10000, (wordsCount / 200) * 60 * 1000);
-      const totalTime = typingTime + 500 + readingTime;
+      const totalTime = introTime + verseTypingTime + 500 + readingTime + 2000;
       
       // Wait for verse to be fully displayed and read
       await new Promise(resolve => setTimeout(resolve, totalTime));
@@ -998,8 +1020,6 @@ async function debateLoop() {
       // Fallback if no verse available
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
-    // Wait 10 seconds before starting new debate
-    await new Promise(resolve => setTimeout(resolve, 10000));
 
     // Clear debate state
     debateState.currentTopic = null;
@@ -1096,3 +1116,30 @@ server.listen(config.port, () => {
     youtubeChatMonitor.start();
   }
 });
+// Pre-verse intro phrases
+const VERSE_INTROS = [
+  "Let's take a minute to cut through the noise...",
+  "Ok... We've been fighting about nonsense, let's say something True...",
+  "Shew that was stressful, let's chill out a bit and spit some facts...",
+  "Hold up... Before the next round, let's talk about what really matters...",
+  "Alright, enough debating. Time for some Truth...",
+  "You know what? Let's pause and remember what's actually important...",
+  "Real talk for a second... Here's something that never changes...",
+  "Before we continue, let me share something eternal...",
+  "All this back and forth... Let's ground ourselves in Truth...",
+  "Hot take: None of this matters compared to this...",
+  "Timeout. Let's get some perspective here...",
+  "Forget the debate for a sec... This is what's real...",
+  "Between rounds, a word of Truth...",
+  "Y'all need to hear this...",
+  "Breaking from the chaos to share something unchanging...",
+  "Listen... While we argue, this remains constant...",
+  "Let me hit you with some eternal wisdom real quick...",
+  "All the noise aside, here's what's True...",
+  "Intermission time. Let's talk about what lasts forever...",
+  "Cool down moment. Some Truth for your soul..."
+];
+
+function getRandomVerseIntro() {
+  return VERSE_INTROS[Math.floor(Math.random() * VERSE_INTROS.length)];
+}
