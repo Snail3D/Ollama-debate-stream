@@ -697,9 +697,10 @@ async function handleSuperChatMessage(username, message, amount = 5.00) {
 
   console.log(`💰 SUPERCHAT from ${username} ($${amount}): ${message}`);
 
-  // Add to SuperChat priority queue
+  // Add to SuperChat priority queue (strip brackets users might include from documentation)
+  const cleanedTopic = message.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
   debateState.superChatQueue.push({
-    topic: message,
+    topic: cleanedTopic,
     username,
     amount,
     timestamp: Date.now()
@@ -1092,9 +1093,10 @@ function handleYouTubeMessage(username, message) {
     return;
   }
 
-  // Add to queue
+  // Add to queue (strip brackets users might include from documentation)
+  const cleanedTopic = message.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
   debateState.queue.push({
-    topic: message,
+    topic: cleanedTopic,
     username,
     timestamp: Date.now()
   });
