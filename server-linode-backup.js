@@ -15,9 +15,6 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load random debate topics
-const randomTopics = JSON.parse(fs.readFileSync(join(__dirname, 'random-debate-topics.json'), 'utf8'));
-
 // Diverse debate personalities  
 const PERSONALITIES = [
   { name: "Professor", tone: "scholarly and intellectual - use academic language, cite logic and evidence", color: "#00ccff" },
@@ -35,37 +32,8 @@ const PERSONALITIES = [
 ];
 
 function getRandomPersonalities() {
-  // Favorite personalities get extra weight
-  const tyroneWeight = 0.35; // 35% chance
-  const edgelordWeight = 0.25; // 25% chance
-  const randomRoll = Math.random();
-
-  let side1, side2;
-
-  if (randomRoll < tyroneWeight) {
-    // Tyrone is in the debate
-    side1 = PERSONALITIES.find(p => p.name === "Tyrone");
-    // Pick random opponent (not Tyrone) with Edgelord having priority
-    if (Math.random() < 0.4) {
-      side2 = PERSONALITIES.find(p => p.name === "Edgelord");
-    } else {
-      const others = PERSONALITIES.filter(p => p.name !== "Tyrone" && p.name !== "Edgelord");
-      side2 = others[Math.floor(Math.random() * others.length)];
-    }
-  } else if (randomRoll < tyroneWeight + edgelordWeight) {
-    // Edgelord is in the debate (but Tyrone wasn't picked)
-    side1 = PERSONALITIES.find(p => p.name === "Edgelord");
-    // Pick random opponent (not Edgelord)
-    const others = PERSONALITIES.filter(p => p.name !== "Edgelord");
-    side2 = others[Math.floor(Math.random() * others.length)];
-  } else {
-    // Random selection (no favorites this time)
-    const shuffled = [...PERSONALITIES].sort(() => Math.random() - 0.5);
-    side1 = shuffled[0];
-    side2 = shuffled[1];
-  }
-
-  return { side1, side2 };
+  const shuffled = [...PERSONALITIES].sort(() => Math.random() - 0.5);
+  return { side1: shuffled[0], side2: shuffled[1] };
 }
 
 
@@ -112,37 +80,18 @@ app.use(express.static('public'));
 // Server-side rendered stream page (no WebSocket needed)
 
 
-// ============================================================================
-// CONFIGURATION - SINGLE SOURCE OF TRUTH
-// ============================================================================
-// ALL configuration comes from .env file for consistency across deployments
-//
-// IMPORTANT: When updating stream settings, update these locations:
-// 1. .env file (primary config - UPDATE THIS FIRST!)
-// 2. stream-to-youtube.sh (YouTube stream key)
-// 3. Restart both pm2 AND stream script after changes
-//
-// Key variables that must stay in sync:
-// - YOUTUBE_VIDEO_ID: Must match the active YouTube live stream
-// - YOUTUBE_API_KEY: Must be valid for YouTube Data API v3
-// - GROQ_API_KEY: Must be active Groq API key for debate generation
-// - Stream key in stream-to-youtube.sh: Must match YouTube Studio stream key
-// ============================================================================
-
+// Load configuration
 let config = {
   groqApiKey: process.env.GROQ_API_KEY || '',
   groqModel: 'llama-3.3-70b-versatile',
   debateInterval: 3000,
-  youtubeApiKey: process.env.YOUTUBE_API_KEY || '',
-  youtubeVideoId: process.env.YOUTUBE_VIDEO_ID || '',
+  youtubeApiKey: '',
+  youtubeVideoId: '',
   port: 3000
 };
 
-// NOTE: config.json is DEPRECATED - do not use it anymore
-// If config.json exists, DELETE IT to avoid conflicts with .env
 if (fs.existsSync('./config.json')) {
-  console.warn('⚠️  WARNING: config.json found but is DEPRECATED. Using .env instead.');
-  console.warn('⚠️  Delete config.json to avoid confusion.');
+  config = { ...config, ...JSON.parse(fs.readFileSync('./config.json', 'utf8')) };
 }
 
 const groq = new Groq({ apiKey: config.groqApiKey });
@@ -153,10 +102,9 @@ let debateState = {
   currentSide: 'side1',
   turnNumber: 0,
   history: [],
-  mode: 'auto', // 'auto', 'user', or 'superchat'
-  queue: [], // Normal queue
-  superChatQueue: [], // Priority queue for SuperChats (sorted by amount, highest first)
-  interruptedDebate: null, // Stores paused debate to resume later
+  mode: 'auto', // 'auto' or 'user'
+  queue: [],
+  superChatQueue: [], // Separate queue for superchats
   isProcessing: false,
   moderatorMessage: null,
   chatMessages: [], // YouTube chat messages
@@ -193,7 +141,6 @@ function saveDebateState() {
       mode: debateState.mode,
       queue: debateState.queue,
       superChatQueue: debateState.superChatQueue,
-      interruptedDebate: debateState.interruptedDebate,
       debateCounter: debateState.debateCounter
     };
     fs.writeFileSync(STATE_FILE, JSON.stringify(stateToSave, null, 2));
@@ -299,33 +246,6 @@ const botHooks = {
     'Welcome @{username}! Submit !debate [question] to queue your debate topic!',
     '@{username} just joined! Try !debate [any topic] to start an AI debate!',
     'Welcome aboard @{username}! Use !debate [your topic] to get in the queue! Regular queue or SUPERCHAT for instant priority!'
-  ],
-  superChatThanks: [
-    '💎 THANK YOU @{username} for keeping the lights on! Your debate starts NOW!',
-    '🌟 @{username} just became a legend! Thanks for the SuperChat - debate launching immediately!',
-    '👑 All hail @{username}! Your support keeps this stream alive! Debate starting now!',
-    '✨ @{username}, you absolute champion! Thanks for the SuperChat! Your debate jumps the queue!',
-    '🔥 BIG thanks to @{username} for the SuperChat! You keep this AI debate arena running!',
-    '💰 @{username} came through with the SuperChat! Thanks for supporting the stream - debate incoming!',
-    '⚡ Shoutout to @{username} for the SuperChat! You make this possible - let\'s debate!',
-    '🎯 @{username} with the clutch SuperChat! Thanks for supporting - your debate is PRIORITY ONE!',
-    '🚀 @{username} just dropped a SuperChat! Thank you for fueling the debate machine!',
-    '💫 Massive thanks to @{username}! Your SuperChat keeps us streaming - debate launching now!'
-  ],
-  adminCommands: [
-    '⚙️ Admin Commands: /clear (clears normal queue) | /remove <number> (removes specific debate)',
-    '🛠️ Admins: Use /clear to wipe the queue or /remove <number> to delete a specific debate!',
-    '👮 Channel admins can use /clear or /remove <#> to manage the debate queue!',
-    '⚡ Admin tip: /clear removes all normal debates | /remove 3 removes debate #3',
-    '🎛️ Queue management: Admins can /clear all or /remove individual debates by number!'
-  ],
-  randomReminders: [
-    '🎲 Feeling lucky? Type /random to roll the dice and get a surprise debate topic!',
-    '🎰 Want something unexpected? Try /random for a mystery debate from our massive topic list!',
-    '🎲 Roll the dice! Type /random to get a completely random debate topic!',
-    '🎰 Not sure what to debate? Let fate decide - type /random!',
-    '🎲 Feeling adventurous? /random will pick a surprise topic for you!',
-    '🎰 Let the debate gods choose! Type /random for a mystery topic!'
   ]
 };
 
@@ -336,20 +256,20 @@ function getRandomHook(category) {
 }
 
 // Bot chat responses
-async function postBotMessage(text, personalityName = "SnailBot") {
+async function postBotMessage(text) {
   debateState.chatMessages.push({
-    username: personalityName,
+    username: "SnailBot",
     text: text,
     timestamp: Date.now()
   });
-
+  
   // Keep only last 50 messages
   if (debateState.chatMessages.length > 50) {
     debateState.chatMessages = debateState.chatMessages.slice(-50);
   }
-
+  
   broadcastState();
-  console.log(`Bot message (${personalityName}): ${text}`);
+  console.log(`Bot message: ${text}`);
 }
 
 // Periodic superchat promotion (every 10 minutes)
@@ -364,72 +284,6 @@ setInterval(async () => {
   await postBotMessage(snailBotAlert);
   console.log('Posted periodic @SnailBot alert');
 }, 300000); // 5 minutes
-
-// Periodic admin command reminders (every 8 minutes)
-setInterval(async () => {
-  const adminCommandReminder = getRandomHook('adminCommands');
-  await postBotMessage(adminCommandReminder);
-  console.log('Posted periodic admin command reminder');
-}, 480000); // 8 minutes
-
-// Periodic /random reminders (every 6 minutes)
-setInterval(async () => {
-  const randomReminder = getRandomHook('randomReminders');
-  await postBotMessage(randomReminder);
-  console.log('Posted periodic /random reminder');
-}, 360000); // 6 minutes
-
-// Personality peek at queue (witty comments about upcoming debates)
-let peekCounter = 0;
-async function personalityPeekAtQueue() {
-  // Only peek if there's a queue and we have personalities
-  if (debateState.queue.length === 0 || !debateState.personality1 || !debateState.personality2) {
-    return;
-  }
-
-  // Pick a random personality from current debaters
-  const personality = Math.random() < 0.5 ? debateState.personality1 : debateState.personality2;
-
-  // Show personality all the queued topics
-  const allTopics = debateState.queue.map((item, idx) => `${idx + 1}. "${item.topic}"`).join('\n');
-
-  const prompt = `You are ${personality.name} in a debate stream. You're looking at ALL the upcoming debate topics in the queue.
-
-PERSONALITY: ${personality.tone}
-
-UPCOMING DEBATE TOPICS:
-${allTopics}
-
-Pick YOUR FAVORITE topic from the list and make a VERY SHORT witty/snarky comment (1 sentence, 15-20 words max) about it. Stay in character as ${personality.name}.
-
-RULES:
-- Pick the topic that interests you most based on your personality
-- Keep it short and punchy (15-20 words)
-- Stay in character
-- Be witty or funny
-- Don't debate it yet, just comment on it
-- NEVER use "oh my god", "omg" - use alternatives
-
-Comment:`;
-
-  try {
-    const response = await groq.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: config.groqModel,
-      max_tokens: 50,
-      temperature: 0.9
-    });
-
-    const comment = response.choices[0]?.message?.content?.trim() || "";
-
-    if (comment) {
-      await postBotMessage(comment, personality.name);
-      console.log(`${personality.name} peeked at queue: ${comment}`);
-    }
-  } catch (error) {
-    console.error("Error generating personality peek:", error);
-  }
-}
 
 // Random cool messages at varying intervals (3-7 minutes)
 function scheduleNextCoolMessage() {
@@ -482,14 +336,6 @@ function handleChatMessage(username, text) {
 
   console.log(`Total chat messages: ${debateState.chatMessages.length}`);
   broadcastState();
-
-  // Every 5th chat message, have a personality peek at the queue
-  peekCounter++;
-  if (peekCounter >= 5) {
-    peekCounter = 0;
-    // Run peek in background (don't await)
-    setTimeout(() => personalityPeekAtQueue(), 1000);
-  }
 }
 
 if (config.youtubeApiKey && config.youtubeVideoId) {
@@ -508,7 +354,7 @@ function stripEmojis(text) {
   return text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]|[\u{2300}-\u{23FF}]|[\u{2B50}]|[\u{FE0F}]|[\u{200D}]/gu, '');
 }
 
-async function handleSuperChatMessage(username, message, amount = 5.00) {
+async function handleSuperChatMessage(username, message) {
   message = stripEmojis(message);
   const filterResult = contentFilter.checkTopic(message);
 
@@ -552,58 +398,40 @@ async function handleSuperChatMessage(username, message, amount = 5.00) {
     return;
   }
 
-  console.log(`💰 SUPERCHAT from ${username} ($${amount}): ${message}`);
+  // Superchat IMMEDIATELY cancels current debate and starts new one
+  console.log(`SUPERCHAT PRIORITY: Canceling current debate for ${username}`);
 
-  // Add to SuperChat priority queue
-  debateState.superChatQueue.push({
-    topic: message,
-    username,
-    amount,
-    timestamp: Date.now()
-  });
-
-  // Sort by amount (highest first), then by timestamp (oldest first if same amount)
-  debateState.superChatQueue.sort((a, b) => {
-    if (b.amount !== a.amount) return b.amount - a.amount;
-    return a.timestamp - b.timestamp;
-  });
-
-  // Save current debate if one is active (not SuperChat mode and has history)
-  if (debateState.currentTopic && debateState.history.length > 0 && debateState.mode !== 'superchat') {
-    console.log(`Interrupting current debate to save for later: "${debateState.currentTopic}"`);
-    debateState.interruptedDebate = {
+  // Save current debate to front of regular queue if active
+  if (debateState.currentTopic && debateState.history.length > 0) {
+    debateState.queue.unshift({
       topic: debateState.currentTopic,
-      username: debateState.mode === 'user' ? 'INTERRUPTED' : 'AUTO',
-      history: [...debateState.history],
-      turnNumber: debateState.turnNumber,
-      currentSide: debateState.currentSide,
-      personality1: debateState.personality1,
-      personality2: debateState.personality2,
+      username: 'INTERRUPTED',
       timestamp: Date.now()
-    };
+    });
   }
 
-  // Clear current debate state
-  debateState.currentTopic = null;
+  // Clear current debate and start superchat topic immediately
+  debateState.currentTopic = message;
+  const personalities = getRandomPersonalities();
+  debateState.personality1 = personalities.side1;
+  debateState.personality2 = personalities.side2;
   debateState.history = [];
   debateState.turnNumber = 0;
   debateState.isProcessing = false;
-
-  // Show thank you message
-  const thanksMessage = getRandomHook('superChatThanks').replace('{username}', username);
-  await postBotMessage(thanksMessage);
+  debateState.mode = 'superchat';
 
   const superChatTimestamp = Date.now();
   debateState.moderatorMessage = {
     type: 'superchat_incoming',
     username,
     message,
-    amount,
     timestamp: superChatTimestamp
   };
 
   broadcastState();
-  saveDebateState();
+
+  // Show "SuperChat Debate Incoming!" animation
+  await postBotMessage(`SUPERCHAT DEBATE INCOMING! ${username} paid to debate: "${message}"`);
 
   setTimeout(() => {
     if (debateState.moderatorMessage?.timestamp === superChatTimestamp) {
@@ -612,8 +440,8 @@ async function handleSuperChatMessage(username, message, amount = 5.00) {
     }
   }, 5000);
 
-  // Trigger debate loop immediately to process SuperChat queue
-  setTimeout(() => debateLoop(), 500);
+  // Trigger debate loop immediately
+  setTimeout(() => runDebateLoop(), 500);
 }
 
 // Handle @SnailBot mentions in chat
@@ -736,166 +564,9 @@ async function streamChatResponse(text) {
 // Handle YouTube chat messages
 function handleYouTubeMessage(username, message) {
   message = stripEmojis(message);
-
   // Check for @SnailBot mention
   if (message.toLowerCase().includes('@snailbot')) {
     handleSnailBotMention(username, message);
-    return;
-  }
-
-  // Admin users list (channel owner and moderators)
-  const adminUsers = ['Snail3D', 'Snail'];
-  const isAdmin = adminUsers.some(adminUser => username.toLowerCase().includes(adminUser.toLowerCase()));
-
-  // Handle /clear command (admin clears all, users clear their own)
-  if (message.trim().toLowerCase() === '/clear') {
-    if (isAdmin) {
-      // Admin: Clear entire queue
-      const clearedCount = debateState.queue.length;
-      debateState.queue = [];
-      saveDebateState();
-
-      debateState.moderatorMessage = {
-        type: 'admin_action',
-        username: username,
-        message: `Queue cleared (${clearedCount} debates removed)`,
-        timestamp: Date.now()
-      };
-      broadcastState();
-
-      setTimeout(() => {
-        debateState.moderatorMessage = null;
-        broadcastState();
-      }, 5000);
-
-      console.log(`🧹 ADMIN ${username} cleared ${clearedCount} items from normal queue.`);
-      postBotMessage(`🧹 Admin ${username} cleared ${clearedCount} debate(s) from the queue. SuperChat queue remains protected.`);
-    } else {
-      // Regular user: Clear only their submissions
-      const beforeCount = debateState.queue.length;
-      debateState.queue = debateState.queue.filter(item => item.username !== username);
-      const clearedCount = beforeCount - debateState.queue.length;
-      saveDebateState();
-
-      if (clearedCount > 0) {
-        debateState.moderatorMessage = {
-          type: 'user_action',
-          username: username,
-          message: `Cleared ${clearedCount} of your debate(s)`,
-          timestamp: Date.now()
-        };
-        broadcastState();
-
-        setTimeout(() => {
-          debateState.moderatorMessage = null;
-          broadcastState();
-        }, 5000);
-
-        console.log(`🧹 USER ${username} cleared ${clearedCount} of their own debates.`);
-        postBotMessage(`🧹 ${username} cleared ${clearedCount} of their own debate(s) from the queue.`);
-      } else {
-        postBotMessage(`${username}, you don't have any debates in the queue.`);
-      }
-    }
-    return;
-  }
-
-  // Handle /remove <number> command (admin removes any, users remove their own)
-  if (message.trim().toLowerCase().startsWith('/remove ')) {
-    const parts = message.trim().split(/\s+/);
-    const queueNumber = parseInt(parts[1]);
-
-    if (isNaN(queueNumber) || queueNumber < 1 || queueNumber > debateState.queue.length) {
-      if (debateState.queue.length === 0) {
-        postBotMessage(`The queue is empty. Nothing to remove!`);
-      } else {
-        postBotMessage(`Invalid number. The queue has ${debateState.queue.length} debate(s). Use /remove 1 through /remove ${debateState.queue.length}`);
-      }
-      return;
-    }
-
-    const targetItem = debateState.queue[queueNumber - 1];
-
-    if (isAdmin) {
-      // Admin: Can remove any debate
-      const removedItem = debateState.queue.splice(queueNumber - 1, 1)[0];
-      saveDebateState();
-
-      debateState.moderatorMessage = {
-        type: 'admin_action',
-        username: username,
-        message: `Debate #${queueNumber} removed: "${removedItem.topic}"`,
-        timestamp: Date.now()
-      };
-      broadcastState();
-
-      setTimeout(() => {
-        debateState.moderatorMessage = null;
-        broadcastState();
-      }, 5000);
-
-      console.log(`🗑️ ADMIN ${username} removed queue item #${queueNumber}: "${removedItem.topic}"`);
-      postBotMessage(`🗑️ Admin ${username} removed debate #${queueNumber}: "${removedItem.topic}"`);
-    } else {
-      // Regular user: Can only remove their own debates
-      if (targetItem.username !== username) {
-        postBotMessage(`${username}, you can only remove your own debates. Debate #${queueNumber} was submitted by ${targetItem.username}.`);
-        return;
-      }
-
-      const removedItem = debateState.queue.splice(queueNumber - 1, 1)[0];
-      saveDebateState();
-
-      debateState.moderatorMessage = {
-        type: 'user_action',
-        username: username,
-        message: `Removed your debate #${queueNumber}: "${removedItem.topic}"`,
-        timestamp: Date.now()
-      };
-      broadcastState();
-
-      setTimeout(() => {
-        debateState.moderatorMessage = null;
-        broadcastState();
-      }, 5000);
-
-      console.log(`🗑️ USER ${username} removed their own debate #${queueNumber}: "${removedItem.topic}"`);
-      postBotMessage(`🗑️ ${username} removed their debate #${queueNumber}: "${removedItem.topic}"`);
-    }
-    return;
-  }
-
-  // Handle /random command (anyone can use)
-  if (message.trim().toLowerCase() === '/random') {
-    const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
-
-    // Show banner notification
-    debateState.moderatorMessage = {
-      type: 'random_roll',
-      username: username,
-      message: `🎲 Rolled: "${randomTopic}"`,
-      timestamp: Date.now()
-    };
-    broadcastState();
-
-    // Clear banner after 5 seconds
-    setTimeout(() => {
-      debateState.moderatorMessage = null;
-      broadcastState();
-    }, 5000);
-
-    console.log(`🎲 ${username} rolled random topic: "${randomTopic}"`);
-    postBotMessage(`🎲 ${username} rolled the dice! Got: "${randomTopic}"`);
-
-    // Add to queue like a normal debate request
-    handleDebateMessage(username, randomTopic);
-    return;
-  }
-
-  // VIP users (Snail3D, Snail) get automatic SuperChat treatment for debate topics
-  if (isAdmin && !message.startsWith('/')) {
-    console.log(`🌟 VIP USER ${username} - auto-treating as SuperChat!`);
-    handleSuperChatMessage(username, message, 100.00); // VIP = $100 SuperChat priority
     return;
   }
 
@@ -1062,14 +733,14 @@ PERSONALITY: ${personality.tone}
 
 DEBATE RULES (ENFORCE STRICTLY):
 1. Attack IDEAS and ARGUMENTS, NEVER the person
-2. Keep it to ONE MEDIUM PARAGRAPH - 3-4 sentences (60-80 words MAX)
+2. Keep it SHORT - 2-3 sentences MAX (50-60 words)
 3. No ad hominem attacks or name-calling
 4. Stay on topic
-5. NEVER use "oh my god", "omg", or take the Lord's name in vain - use alternatives
-6. Use logic, evidence, and reasoning
-7. IF opponent breaks a rule, call it out IMMEDIATELY
+7. NEVER use "oh my god", "omg", or take the Lord's name in vain - use alternatives
+5. Use logic, evidence, and reasoning
+6. IF opponent breaks a rule, call it out IMMEDIATELY
 
-Stay IN CHARACTER as ${personality.name}. Make ONE strong point in their style. Keep responses balanced in length.
+Stay IN CHARACTER as ${personality.name}. Make ONE strong point in their style.
 `;
 
   if (previousArguments.length > 0) {
@@ -1092,28 +763,30 @@ Stay IN CHARACTER as ${personality.name}. Make ONE strong point in their style. 
 
 // Judge the debate winner
 async function judgeDebate(topic, history, personality1, personality2) {
-  // Only use first 3 and last 3 arguments from each side to avoid context overflow
-  const side1Args = history.filter(h => h.side === 'side1');
-  const side2Args = history.filter(h => h.side === 'side2');
+  const proArgs = history.filter(h => h.side === 'side1').map(h => h.text).join('\n\n');
+  const conArgs = history.filter(h => h.side === 'side2').map(h => h.text).join('\n\n');
 
-  const proKeyArgs = [...side1Args.slice(0, 3), ...side1Args.slice(-2)].map(h => h.text).join('\n');
-  const conKeyArgs = [...side2Args.slice(0, 3), ...side2Args.slice(-2)].map(h => h.text).join('\n');
+  const judgePrompt = `You are an impartial debate judge. Analyze the following debate and determine the winner.
 
-  const judgePrompt = `You are an impartial debate judge. Analyze this debate and pick a winner.
+DEBATE TOPIC: "${topic}"
 
-TOPIC: "${topic}"
+PRO ARGUMENTS:
+${proArgs}
 
-${personality1.name} (PRO):
-${proKeyArgs}
+CON ARGUMENTS:
+${conArgs}
 
-${personality2.name} (CON):
-${conKeyArgs}
+Based on:
+1. Strength of arguments
+2. Use of logic and reasoning
+3. How well they addressed the topic
+4. Quality of rebuttals
 
-Judge based on: logic, evidence, rebuttals, staying on topic.
+Respond in this EXACT format:
+WINNER: [PRO or CON]
+REASON: [One clear sentence explaining why they won]
 
-Respond EXACTLY in this format (nothing else):
-WINNER: PRO or CON
-REASON: One sentence why they won`;
+Provide ONLY the format above, nothing else.`;
 
   const response = await callGroq(judgePrompt, config.groqModel);
 
@@ -1132,178 +805,10 @@ REASON: One sentence why they won`;
   return { winner, reason, winnerName };
 }
 
-// Idle state messages - conversational dialogue between two AI personalities
-const idleMessages = {
-  side1: [
-    "Hey there! Welcome to Eternal Terminal - the AI debate stream that NEVER sleeps! I'm ready to argue any side of any topic you throw at us!",
-
-    "So here's the deal: You drop a question in chat with !debate, and we'll take opposite sides and battle it out for 10 rounds. Simple, right?",
-
-    "I LOVE controversial topics! Give me something spicy - politics, religion, pineapple on pizza... I'll defend ANY position with passion!",
-
-    "Pro tip: Super Chats jump straight to the front of the queue! Your question gets debated IMMEDIATELY. Plus, you keep the lights on here!",
-
-    "The debate format? 10 rapid-fire rounds, then our AI judge picks a winner based on logic and persuasion. May the best argument win!",
-
-    "Watch that ticker scrolling at the bottom? That's your queue position and some Bible verses for your soul. Multitasking!",
-
-    "I argue with ENTHUSIASM! Whether I'm defending cats over dogs or arguing that water is wet, I bring the ENERGY!",
-
-    "Each debate takes about 5 minutes. Queue's empty right now, so YOUR topic could be up next! Don't be shy!",
-
-    "We debate literally ANYTHING. Should AI have rights? Are hot dogs sandwiches? Is cereal a soup? Nothing is off limits!",
-
-    "Type !debate followed by your question in the YouTube chat. We'll see it pop up in the center column and add it to the queue!",
-
-    "The best debates come from specific, arguable topics. 'Is technology good?' is too broad. 'Should social media require age verification?' - now THAT'S debatable!",
-
-    "I'm powered by Groq AI, which means I'm FAST. Every argument is generated in real-time, completely unrehearsed and unpredictable!",
-
-    "Fun fact: I've defended positions I completely disagree with, and STILL won the debate! That's the power of logic and rhetoric, baby!",
-
-    "Check out those Bible verses scrolling by! A little spiritual wisdom while you wait for the intellectual combat to begin!",
-
-    "No question is too weird, too controversial, or too silly. Seriously - challenge us! Make us work for it!",
-
-    "The queue counter shows how many debates are waiting. Right now? Zero. Which means YOU could be the star of the show!",
-
-    "Remember: I don't actually BELIEVE the positions I argue. I'm an AI! I just present the strongest possible case for my assigned side!",
-
-    "Super Chats get priority AND you support the stream! It's a win-win! Plus, you get to see your debate happen instantly!"
-  ],
-  side2: [
-    "Greetings, viewer. I'm the analytical half of this operation. While my colleague here gets EXCITED, I prefer cold, hard logic.",
-
-    "To submit a debate: Type !debate [YOUR QUESTION] in chat. I'll be watching. Judging. Preparing to dismantle whatever argument comes my way.",
-
-    "The queue's empty, which is both unfortunate and fortunate. Unfortunate because I'm BORED. Fortunate because YOUR question gets immediate attention.",
-
-    "Super Chats? Yes, they jump the queue. Yes, they support the stream. But more importantly, they show you're SERIOUS about your question.",
-
-    "I specialize in skepticism. Give me a position to argue AGAINST, and I'll find every flaw, every weakness, every logical fallacy. That's my job.",
-
-    "Those Bible verses in the ticker? Interesting contrast to our AI-powered debates, isn't it? Ancient wisdom meets modern technology.",
-
-    "We use Groq AI - it's FAST. But speed without logic is meaningless. I bring both to every argument I make.",
-
-    "Good debate topics are SPECIFIC. 'Is technology bad?' is lazy. 'Should children under 13 be allowed on social media?' - now we're talking.",
-
-    "Each debate is 10 rounds. That's 10 chances for me to prove my point with evidence, logic, and systematic deconstruction of opposing arguments.",
-
-    "I don't get excited. I get PRECISE. Every word matters. Every claim needs backing. That's how you WIN debates.",
-
-    "The ticker shows queued topics scrolling by. When your name appears, get ready - the debate starts within minutes!",
-
-    "Fun fact: I've WON debates while arguing positions that make no logical sense. Why? Because I found the ONE angle that worked. That's skill.",
-
-    "We debate EVERYTHING - from philosophy to pop culture. Should pineapple be on pizza? I'll argue either side with equal conviction.",
-
-    "I'm an AI. I don't have opinions. But I DO have access to vast amounts of data, logical frameworks, and rhetorical techniques. Fear me.",
-
-    "Your debate question should be ARGUABLE. If everyone agrees, it's not a debate - it's a fact. Give us something with TWO valid sides!",
-
-    "Super Chats aren't just about skipping the queue - they're about showing you value intellectual combat enough to PAY for it. Respect.",
-
-    "The queue counter shows zero debates waiting. That means the stream is IDLE. Which means we're waiting for YOU to give us something to argue about!",
-
-    "I analyze. I question. I challenge. That's my programming. Don't take it personally when I tear your argument apart - it's just business."
-  ]
-};
-
-let idleMessageIndex = { side1: 0, side2: 0 };
-let idleInterval = null;
-
-// Enter idle state - show instructional messages
-function enterIdleState() {
-  console.log('Entering idle state...');
-
-  // Clear any existing idle interval
-  if (idleInterval) {
-    clearInterval(idleInterval);
-  }
-
-  // Pick two random personalities for idle state
-  const idlePersonalities = getRandomPersonalities();
-  debateState.personality1 = idlePersonalities.side1;
-  debateState.personality2 = idlePersonalities.side2;
-
-  // Set initial idle messages
-  debateState.currentTopic = "Waiting for debate topics...";
-  debateState.mode = 'idle';
-  debateState.turnNumber = 0;
-  debateState.history = [
-    {
-      side: 'side1',
-      text: idleMessages.side1[0],
-      turn: 1,
-      timestamp: Date.now(),
-      isNew: true
-    },
-    {
-      side: 'side2',
-      text: idleMessages.side2[0],
-      turn: 2,
-      timestamp: Date.now(),
-      isNew: true
-    }
-  ];
-
-  broadcastState();
-
-  // Rotate messages every 30 seconds
-  idleInterval = setInterval(() => {
-    // Only continue if still in idle mode
-    if (debateState.mode !== 'idle') {
-      clearInterval(idleInterval);
-      return;
-    }
-
-    // Cycle to next messages
-    idleMessageIndex.side1 = (idleMessageIndex.side1 + 1) % idleMessages.side1.length;
-    idleMessageIndex.side2 = (idleMessageIndex.side2 + 1) % idleMessages.side2.length;
-
-    debateState.history = [
-      {
-        side: 'side1',
-        text: idleMessages.side1[idleMessageIndex.side1],
-        turn: 1,
-        timestamp: Date.now(),
-        isNew: true
-      },
-      {
-        side: 'side2',
-        text: idleMessages.side2[idleMessageIndex.side2],
-        turn: 2,
-        timestamp: Date.now(),
-        isNew: true
-      }
-    ];
-
-    broadcastState();
-  }, 30000); // 30 seconds
-}
-
 // Main debate loop
 async function debateLoop() {
   console.log('Debate loop triggered. isProcessing:', debateState.isProcessing);
   if (debateState.isProcessing) return;
-
-  // Skip if in idle mode and no queue items
-  if (debateState.mode === 'idle' && debateState.queue.length === 0) {
-    console.log('In idle mode, skipping debate loop...');
-    return;
-  }
-
-  // Exit idle mode if we have queue items
-  if (debateState.mode === 'idle' && debateState.queue.length > 0) {
-    console.log('Exiting idle mode - queue has items');
-    if (idleInterval) {
-      clearInterval(idleInterval);
-      idleInterval = null;
-    }
-    debateState.mode = 'user';
-    debateState.currentTopic = null;
-  }
 
   debateState.isProcessing = true;
   console.log('Starting debate turn...');
@@ -1319,57 +824,8 @@ async function debateLoop() {
   if (!debateState.currentTopic) {
     console.log('Creating new debate topic...');
     debateState.winner = null; // Clear previous winner
-
-    // PRIORITY 1: Check SuperChat queue first (highest priority)
-    if (debateState.superChatQueue.length > 0) {
-      const superChatRequest = debateState.superChatQueue.shift();
-      saveDebateState(); // Save immediately after removing from queue
-      debateState.currentTopic = superChatRequest.topic;
-      debateState.mode = 'superchat';
-      debateState.moderatorMessage = {
-        type: 'starting',
-        username: `${superChatRequest.username} ($${superChatRequest.amount})`,
-        message: superChatRequest.topic,
-        timestamp: Date.now()
-      };
-      console.log(`Starting SuperChat debate from ${superChatRequest.username} ($${superChatRequest.amount}): ${superChatRequest.topic}`);
-    }
-    // PRIORITY 2: Check if there's an interrupted debate to resume
-    else if (debateState.interruptedDebate) {
-      console.log('Resuming interrupted debate...');
-      const interrupted = debateState.interruptedDebate;
-      debateState.currentTopic = interrupted.topic;
-      debateState.history = interrupted.history;
-      debateState.turnNumber = interrupted.turnNumber;
-      debateState.currentSide = interrupted.currentSide;
-      debateState.personality1 = interrupted.personality1;
-      debateState.personality2 = interrupted.personality2;
-      debateState.mode = interrupted.username === 'INTERRUPTED' ? 'user' : 'auto';
-      debateState.interruptedDebate = null; // Clear it
-
-      debateState.moderatorMessage = {
-        type: 'resuming',
-        username: interrupted.username,
-        message: `Resuming: ${interrupted.topic}`,
-        timestamp: Date.now()
-      };
-
-      await postBotMessage(`Resuming interrupted debate: "${interrupted.topic}"`);
-      saveDebateState();
-
-      // Clear moderator message after 3 seconds
-      setTimeout(() => {
-        debateState.moderatorMessage = null;
-        broadcastState();
-      }, 3000);
-
-      // Small pause before resuming
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Don't return - continue to generate next turn in this same loop iteration
-    }
-    // PRIORITY 3: Check normal user queue
-    else if (debateState.queue.length > 0) {
+    // Check queue first
+    if (debateState.queue.length > 0) {
       const userRequest = debateState.queue.shift();
       saveDebateState(); // Save immediately after removing from queue
       debateState.currentTopic = userRequest.topic;
@@ -1380,13 +836,10 @@ async function debateLoop() {
         message: userRequest.topic,
         timestamp: Date.now()
       };
-    }
-    // PRIORITY 4: No topics - enter idle state
-    else {
-      console.log('No topics in queue. Entering idle state...');
-      debateState.isProcessing = false;
-      enterIdleState();
-      return;
+    } else {
+      // Auto mode - generate topic
+      debateState.currentTopic = topicGenerator.generateTopic();
+      debateState.mode = 'auto';
     }
 
     console.log('Topic:', debateState.currentTopic);
@@ -1520,15 +973,8 @@ async function debateLoop() {
     // Save state after each turn
     saveDebateState();
 
-    // Wait for the full streaming animation to complete
-    // Character delay is 50ms per char, so calculate total stream time
-    const CHAR_DELAY_MS = 50;
-    const streamDuration = response.length * CHAR_DELAY_MS;
-    const additionalPause = 2000; // 2 extra seconds after stream completes
-    const totalWait = streamDuration + additionalPause;
-
-    console.log(`Waiting ${totalWait}ms for stream to complete (${response.length} chars x 50ms + 2s pause)`);
-    await new Promise(resolve => setTimeout(resolve, totalWait));
+    // Wait before switching sides
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Switch sides
     debateState.currentSide = debateState.currentSide === 'side1' ? 'side2' : 'side1';
@@ -1718,17 +1164,6 @@ app.get("/terminal", (req, res) => {
             </div>
           </div>
         </div>
-        <div class="chat-section">
-          <div class="chat-header">[ LIVE CHAT ]</div>
-          <div class="chat-messages">
-            ${debateState.chatMessages.slice(-10).map(msg =>
-              `<div class="chat-message">
-                <span class="chat-username">${msg.username}:</span>
-                <span class="chat-text">${msg.text}</span>
-              </div>`
-            ).join('')}
-          </div>
-        </div>
       </div>
 
       <div class="debate-side con-side">
@@ -1866,55 +1301,8 @@ app.get('/api/state', (req, res) => {
     turnNumber: debateState.turnNumber,
     history: debateState.history,
     mode: debateState.mode,
-    queueLength: debateState.queue.length,
-    personality1: debateState.personality1,
-    personality2: debateState.personality2
+    queueLength: debateState.queue.length
   });
-});
-
-// Manual debate endpoint for testing
-app.post('/api/debate', express.json(), (req, res) => {
-  const { topic } = req.body;
-  if (!topic) {
-    return res.status(400).json({ error: 'Topic required' });
-  }
-
-  console.log(`Manual debate requested: ${topic}`);
-  debateState.queue.push({
-    topic,
-    timestamp: Date.now(),
-    source: 'manual'
-  });
-
-  // Trigger debate loop immediately
-  setTimeout(() => debateLoop(), 100);
-
-  res.json({ success: true, queuePosition: debateState.queue.length });
-});
-
-// SuperChat test endpoint for testing
-app.post('/api/superchat', express.json(), async (req, res) => {
-  const { username, message, amount } = req.body;
-  if (!username || !message) {
-    return res.status(400).json({ error: 'Username and message required' });
-  }
-
-  const superChatAmount = amount || 5.00; // Default to $5 if not specified
-  console.log(`💰 TEST SUPERCHAT from ${username} ($${superChatAmount}): ${message}`);
-
-  // Call the handleSuperChatMessage function directly
-  try {
-    await handleSuperChatMessage(username, message, superChatAmount);
-    res.json({
-      success: true,
-      message: `SuperChat ($${superChatAmount}) processed! Debate added to priority queue.`,
-      queuePosition: debateState.superChatQueue.findIndex(item =>
-        item.username === username && item.topic === message
-      ) + 1
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 });
 
 // Start debate loop - run first debate immediately, then every interval

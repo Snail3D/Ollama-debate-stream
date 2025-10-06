@@ -53,13 +53,19 @@ function updateConnectionStatus(connected) {
   }
 }
 
+// Map side1/side2 to pro/con
+function getSideContainer(side) {
+  return side === 'side1' ? 'pro' : 'con';
+}
+
 // Handle streaming text chunks
 function handleStreamChunk(data) {
   if (data.start) {
     currentStreamingSide = data.side;
     streamingText = '';
 
-    const container = document.getElementById(`${data.side}Arguments`);
+    const containerName = getSideContainer(data.side);
+    const container = document.getElementById(`${containerName}Arguments`);
     const argBox = document.createElement('div');
     argBox.className = 'argument-box streaming';
     argBox.id = `streaming-${data.side}`;
@@ -77,7 +83,8 @@ function handleStreamChunk(data) {
     }
 
     // Auto-scroll
-    const container = document.getElementById(`${data.side}Arguments`);
+    const containerName = getSideContainer(data.side);
+    const container = document.getElementById(`${containerName}Arguments`);
     container.scrollTop = container.scrollHeight;
   }
 

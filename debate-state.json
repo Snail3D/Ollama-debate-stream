@@ -1,0 +1,25 @@
+{
+  "currentTopic": "Waiting for debate topics...",
+  "currentSide": "pro",
+  "turnNumber": 2,
+  "history": [
+    {
+      "side": "pro",
+      "text": "No question is too tough! We'll take any side of any argument and give it our all!",
+      "turn": 1,
+      "timestamp": 1759711360382,
+      "isNew": true
+    },
+    {
+      "side": "con",
+      "text": "Remember: A good debate needs good questions. Make us work for it! Challenge us with your toughest topics!",
+      "turn": 2,
+      "timestamp": 1759711360382,
+      "isNew": true
+    }
+  ],
+  "mode": "idle",
+  "queue": [],
+  "superChatQueue": [],
+  "debateCounter": 0
+}
