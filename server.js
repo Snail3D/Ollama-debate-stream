@@ -352,11 +352,23 @@ async function postBotMessage(text, personalityName = "SnailBot") {
   console.log(`Bot message (${personalityName}): ${text}`);
 }
 
-// Periodic superchat promotion (every 10 minutes)
+// Periodic superchat promotion - dynamic based on queue size
+// Normal: every 10 minutes | High queue (5+): every ~3 minutes (3x frequency)
+let lastSuperChatPromo = Date.now();
 setInterval(async () => {
-  const promoMessage = getRandomHook('superChatPromo');
-  await postBotMessage(promoMessage);
-}, 600000); // 10 minutes
+  const now = Date.now();
+  const timeSinceLastPromo = now - lastSuperChatPromo;
+
+  // High queue (5+): promote every ~3.3 minutes (200000ms)
+  // Normal queue: promote every 10 minutes (600000ms)
+  const promoInterval = debateState.queue.length >= 5 ? 200000 : 600000;
+
+  if (timeSinceLastPromo >= promoInterval) {
+    const promoMessage = getRandomHook('superChatPromo');
+    await postBotMessage(promoMessage);
+    lastSuperChatPromo = now;
+  }
+}, 60000); // Check every minute
 
 // Periodic @SnailBot alert (every 5 minutes)
 setInterval(async () => {
