@@ -990,30 +990,90 @@ function handleYouTubeMessage(username, message) {
     return;
   }
 
-  // Handle /random command (anyone can use)
-  if (message.trim().toLowerCase() === '/random') {
-    const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
+  // Handle random topic requests (flexible matching)
+  const randomPatterns = [
+    '/random',
+    'random',
+    'random debate',
+    'random topic',
+    'random question',
+    'surprise me',
+    'dealers choice'
+  ];
 
-    // Show banner notification
-    debateState.moderatorMessage = {
-      type: 'random_roll',
-      username: username,
-      message: `🎲 Rolled: "${randomTopic}"`,
-      timestamp: Date.now()
-    };
-    broadcastState();
+  const lowerMessage = message.trim().toLowerCase();
+  const isRandomRequest = randomPatterns.some(pattern => lowerMessage === pattern);
 
-    // Clear banner after 5 seconds
-    setTimeout(() => {
-      debateState.moderatorMessage = null;
-      broadcastState();
-    }, 5000);
+  if (isRandomRequest) {
+    // Generate a spicy debate topic using Groq AI
+    (async () => {
+      try {
+        const prompt = "Generate ONE spicy, controversial, or thought-provoking debate topic. Keep it under 12 words. Make it engaging and fun! Only respond with the topic itself, nothing else.";
 
-    console.log(`🎲 ${username} rolled random topic: "${randomTopic}"`);
-    postBotMessage(`🎲 ${username} rolled the dice! Got: "${randomTopic}"`);
+        const response = await groq.chat.completions.create({
+          messages: [{ role: 'user', content: prompt }],
+          model: config.groqModel,
+          temperature: 1.2, // Extra spicy!
+          max_tokens: 50
+        });
 
-    // Add to queue like a normal debate request
-    handleDebateMessage(username, randomTopic);
+        const randomTopic = response.choices[0]?.message?.content?.trim() || randomTopics[Math.floor(Math.random() * randomTopics.length)];
+
+        // Show banner notification
+        debateState.moderatorMessage = {
+          type: 'random_roll',
+          username: username,
+          message: `🎲 AI Generated: "${randomTopic}"`,
+          timestamp: Date.now()
+        };
+        broadcastState();
+
+        // Clear banner after 5 seconds
+        setTimeout(() => {
+          debateState.moderatorMessage = null;
+          broadcastState();
+        }, 5000);
+
+        console.log(`🎲 ${username} rolled AI random topic: "${randomTopic}"`);
+        postBotMessage(`🎲 ${username} rolled the AI dice! Got: "${randomTopic}"`);
+
+        // Add to queue - check if admin for priority
+        if (isAdmin) {
+          handleSuperChatMessage(username, randomTopic, 1.00);
+        } else {
+          // For regular users, add to normal queue (continuing the rest of the function)
+          const filterResult = contentFilter.checkTopic(randomTopic);
+          if (filterResult.allowed) {
+            const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
+            debateState.queue.push({
+              topic: cleanedTopic,
+              username,
+              timestamp: Date.now()
+            });
+            saveDebateState();
+            broadcastState();
+          }
+        }
+      } catch (error) {
+        console.error('Error generating random topic:', error);
+        // Fallback to static list
+        const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
+        postBotMessage(`🎲 ${username} rolled the dice! Got: "${randomTopic}"`);
+
+        if (isAdmin) {
+          handleSuperChatMessage(username, randomTopic, 1.00);
+        } else {
+          const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
+          debateState.queue.push({
+            topic: cleanedTopic,
+            username,
+            timestamp: Date.now()
+          });
+          saveDebateState();
+          broadcastState();
+        }
+      }
+    })();
     return;
   }
 
