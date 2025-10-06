@@ -19,6 +19,17 @@ const bibleVerses = [
   "Psalm 46:1 - God is our refuge and strength, a very present help in trouble"
 ];
 
+// Current Bible verse (rotates every 30 minutes)
+let currentBibleVerse = bibleVerses[0];
+let bibleVerseIndex = 0;
+
+// Rotate Bible verse every 30 minutes
+setInterval(() => {
+  bibleVerseIndex = (bibleVerseIndex + 1) % bibleVerses.length;
+  currentBibleVerse = bibleVerses[bibleVerseIndex];
+  console.log('Bible verse rotated:', currentBibleVerse);
+}, 30 * 60 * 1000); // 30 minutes
+
 function connect() {
   ws = new WebSocket(`ws://${window.location.host}`);
 
@@ -319,12 +330,10 @@ function updateQueueTicker(queue, superChatQueue) {
     return `<span class="${className}">${item.text}</span>`;
   }).join('');
 
-  // Add Bible verses at the end
-  const verseContent = bibleVerses.map(verse =>
-    `<span class="bible-verse">✝ ${verse}</span>`
-  ).join(' ••• ');
+  // Add current Bible verse at the end (rotates every 30 minutes)
+  const verseContent = `<span class="bible-verse">✝ ${currentBibleVerse}</span>`;
 
-  // Add like & subscribe message and verses at the end
+  // Add like & subscribe message and verse at the end
   const fullContent = items + '<span>••• LIKE & SUBSCRIBE FOR MORE AI DEBATES! ••• </span>' + verseContent;
 
   // Duplicate 3x for consistent speed regardless of content length
