@@ -71,14 +71,17 @@ function handleStreamChunk(data) {
     argBox.id = `streaming-${data.side}`;
     container.appendChild(argBox);
 
-    // Auto-scroll to bottom - multiple attempts for reliability
-    container.scrollTop = container.scrollHeight;
-    setTimeout(() => {
-      container.scrollTop = container.scrollHeight;
-    }, 50);
-    setTimeout(() => {
-      container.scrollTop = container.scrollHeight;
-    }, 150);
+    // Auto-scroll the .debate-side parent (which has overflow-y: auto)
+    const sideDiv = argBox.closest('.debate-side');
+    if (sideDiv) {
+      sideDiv.scrollTop = sideDiv.scrollHeight;
+      setTimeout(() => {
+        sideDiv.scrollTop = sideDiv.scrollHeight;
+      }, 50);
+      setTimeout(() => {
+        sideDiv.scrollTop = sideDiv.scrollHeight;
+      }, 150);
+    }
   }
 
   if (data.chunk) {
@@ -88,12 +91,16 @@ function handleStreamChunk(data) {
       argBox.innerHTML = `<div class="argument-text">${streamingText}<span class="typing-cursor"></span></div>`;
     }
 
-    // Auto-scroll - use requestAnimationFrame for smoother scrolling
-    const containerName = getSideContainer(data.side);
-    const container = document.getElementById(`${containerName}Arguments`);
-    requestAnimationFrame(() => {
-      container.scrollTop = container.scrollHeight;
-    });
+    // Auto-scroll - scroll the .debate-side parent container, not the arguments div!
+    // Only scroll every 10 characters to reduce jank (like v2.91)
+    if (streamingText.length % 10 === 0) {
+      const argBox = document.getElementById(`streaming-${data.side}`);
+      const sideDiv = argBox ? argBox.closest('.debate-side') : null;
+
+      if (sideDiv) {
+        sideDiv.scrollTop = sideDiv.scrollHeight;
+      }
+    }
   }
 
   if (data.complete) {
@@ -102,16 +109,17 @@ function handleStreamChunk(data) {
       argBox.classList.remove('streaming');
       argBox.id = '';
       argBox.innerHTML = `<div class="argument-text">${streamingText}</div>`;
+
+      // Final scroll after completion - scroll the .debate-side parent
+      const sideDiv = argBox.closest('.debate-side');
+      if (sideDiv) {
+        setTimeout(() => {
+          sideDiv.scrollTop = sideDiv.scrollHeight;
+        }, 100);
+      }
     }
     currentStreamingSide = null;
     streamingText = '';
-
-    // Final scroll after completion
-    const containerName = getSideContainer(data.side);
-    const container = document.getElementById(`${containerName}Arguments`);
-    setTimeout(() => {
-      container.scrollTop = container.scrollHeight;
-    }, 100);
   }
 }
 
