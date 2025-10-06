@@ -18,7 +18,7 @@ const __dirname = dirname(__filename);
 // Load random debate topics
 const randomTopics = JSON.parse(fs.readFileSync(join(__dirname, 'random-debate-topics.json'), 'utf8'));
 
-// Diverse debate personalities (30 total - 12 original + 18 new)
+// Diverse debate personalities (40 total for AI-powered personality matching!)
 const PERSONALITIES = [
   // Original 12 personalities
   { name: "Professor", tone: "scholarly and intellectual - use academic language, cite logic and evidence", color: "#00ccff" },
@@ -54,9 +54,75 @@ const PERSONALITIES = [
   { name: "True Crime Podcaster", tone: "investigative storyteller - dramatic pauses, but here's the thing, connects clues, suspenseful", color: "#8b008b" },
   { name: "Spicy Neighbor", tone: "NIMBY complainer - against all progress, not in my backyard, complains about everything new, property values obsessed", color: "#dc143c" },
   { name: "Lawyer", tone: "legal eagle - objection your honor, argues precedent and procedure, loves loopholes and technicalities", color: "#2f4f4f" },
-  { name: "Hippie", tone: "peace and love - everything is connected man, anti-establishment, Mother Earth vibes, groovy wisdom", color: "#9acd32" }
+  { name: "Hippie", tone: "peace and love - everything is connected man, anti-establishment, Mother Earth vibes, groovy wisdom", color: "#9acd32" },
+
+  // Additional Variety (10 more)
+  { name: "Scientist", tone: "empirical researcher - peer review everything, demands data, hypothesis-driven, evidence only", color: "#4169e1" },
+  { name: "Preacher", tone: "fire and brimstone - passionate sermonizing, moral authority, biblical references, thou shalt energy", color: "#800020" },
+  { name: "Surfer Dude", tone: "laid back beach bum - totally chill bro, hang loose vibes, goes with the flow, waves and wisdom", color: "#00ced1" },
+  { name: "Detective", tone: "noir investigator - solve the mystery, follow the evidence, hard-boiled cynicism, elementary my dear", color: "#36454f" },
+  { name: "Therapist", tone: "empathetic counselor - how does that make you feel, validate emotions, unpack that, safe space energy", color: "#e6a8d7" },
+  { name: "Gordon Ramsay", tone: "brutal chef - IT'S RAW, perfectionist standards, culinary passion mixed with savage criticism", color: "#ff0000" },
+  { name: "Elon Musk", tone: "visionary CEO - Mars colonization, first principles thinking, memes and engineering, efficiency obsessed", color: "#000000" },
+  { name: "Shakespeare", tone: "eloquent bard - flowery language, to be or not to be vibes, dramatic metaphors, poetic everything", color: "#dda0dd" },
+  { name: "Drill Sergeant", tone: "military hardass - DROP AND GIVE ME 20, discipline above all, tough love, no excuses maggot", color: "#556b2f" },
+  { name: "Alien", tone: "extraterrestrial observer - humans are fascinating, outside perspective, logical but confused by Earth culture", color: "#7fff00" }
 ];
 
+// AI-powered personality picker - analyzes topic and selects best-fit personalities
+async function pickPersonalitiesForTopic(topic) {
+  try {
+    const personalityList = PERSONALITIES.map(p => `${p.name}: ${p.tone}`).join('\n');
+
+    const prompt = `You are selecting the two BEST debate personalities for this topic.
+
+TOPIC: "${topic}"
+
+AVAILABLE PERSONALITIES:
+${personalityList}
+
+Analyze the topic and pick the TWO personalities who would create the MOST INTERESTING debate:
+- Serious topics → serious debaters (Professor, Marie Curie, Lincoln, etc.)
+- Silly topics → funny debaters (Karen, Valley Girl, Chad, etc.)
+- Tech topics → tech-savvy debaters (Tech Bro, Professor, Tesla, etc.)
+- Political topics → strategic debaters (Sun Tzu, Cleopatra, Lawyer, etc.)
+- Mix serious + comedic for contrast when appropriate
+
+Pick personalities who will CLASH and create engaging arguments!
+
+Respond ONLY with two names separated by a comma, like: "Abraham Lincoln, Tech Bro"
+
+Your selection:`;
+
+    const response = await groq.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: config.groqModel,
+      temperature: 0.7,
+      max_tokens: 30
+    });
+
+    const selection = response.choices[0]?.message?.content?.trim();
+    if (!selection) throw new Error('No selection received');
+
+    // Parse the selection
+    const names = selection.split(',').map(n => n.trim());
+    const side1 = PERSONALITIES.find(p => p.name === names[0]);
+    const side2 = PERSONALITIES.find(p => p.name === names[1]);
+
+    if (side1 && side2 && side1.name !== side2.name) {
+      console.log(`🎭 AI selected personalities for "${topic}": ${side1.name} vs ${side2.name}`);
+      return { side1, side2 };
+    } else {
+      console.log(`⚠️ AI selection failed, falling back to random`);
+      return getRandomPersonalities();
+    }
+  } catch (error) {
+    console.error('Error picking personalities:', error);
+    return getRandomPersonalities();
+  }
+}
+
+// Fallback random personality picker (used for idle mode and fallback)
 function getRandomPersonalities() {
   // Favorite personalities get slightly extra weight (reduced from 35%/25% to 10%/10%)
   const tyroneWeight = 0.10; // 10% chance
@@ -1564,8 +1630,8 @@ async function debateLoop() {
     console.log('Random selection:', debateState.currentSide, 'goes first');
 
 
-    // Assign random personalities for this debate
-    const personalities = getRandomPersonalities();
+    // AI-powered personality selection based on topic
+    const personalities = await pickPersonalitiesForTopic(debateState.currentTopic);
     debateState.personality1 = personalities.side1;
     debateState.personality2 = personalities.side2;
     
