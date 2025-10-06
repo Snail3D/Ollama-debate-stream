@@ -1017,7 +1017,7 @@ function handleYouTubeMessage(username, message) {
   // VIP users (Snail3D, Snail) get automatic SuperChat treatment for debate topics
   if (isAdmin && !message.startsWith('/')) {
     console.log(`🌟 VIP USER ${username} - auto-treating as SuperChat!`);
-    handleSuperChatMessage(username, message, 100.00); // VIP = $100 SuperChat priority
+    handleSuperChatMessage(username, message, 1.00); // VIP = $1 SuperChat priority
     return;
   }
 
