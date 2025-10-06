@@ -813,6 +813,12 @@ body.glitching::after {
   font-weight: bold;
 }
 
+.queue-ticker .bible-verse {
+  color: #00ccff;
+  text-shadow: 0 0 10px #00ccff;
+  font-weight: bold;
+}
+
 @keyframes scroll-left {
   0% {
     transform: translateX(0%);

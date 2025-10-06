@@ -5,6 +5,20 @@ let currentStreamingSide = null;
 let streamingText = '';
 let streamingInterval = null;
 
+// Bible verses for ticker
+const bibleVerses = [
+  "John 3:16 - For God so loved the world that He gave His one and only Son",
+  "Philippians 4:13 - I can do all things through Christ who strengthens me",
+  "Proverbs 3:5-6 - Trust in the LORD with all your heart",
+  "Jeremiah 29:11 - For I know the plans I have for you, declares the LORD",
+  "Romans 8:28 - All things work together for good to those who love God",
+  "Psalm 23:1 - The LORD is my shepherd, I shall not want",
+  "Isaiah 41:10 - Fear not, for I am with you; be not dismayed",
+  "Matthew 6:33 - Seek first the kingdom of God and His righteousness",
+  "2 Timothy 1:7 - God has not given us a spirit of fear, but of power",
+  "Psalm 46:1 - God is our refuge and strength, a very present help in trouble"
+];
+
 function connect() {
   ws = new WebSocket(`ws://${window.location.host}`);
 
@@ -305,11 +319,16 @@ function updateQueueTicker(queue, superChatQueue) {
     return `<span class="${className}">${item.text}</span>`;
   }).join('');
 
-  // Add like & subscribe message at the end
-  const fullContent = items + '<span>••• LIKE & SUBSCRIBE FOR MORE AI DEBATES!</span>';
+  // Add Bible verses at the end
+  const verseContent = bibleVerses.map(verse =>
+    `<span class="bible-verse">✝ ${verse}</span>`
+  ).join(' ••• ');
+
+  // Add like & subscribe message and verses at the end
+  const fullContent = items + '<span>••• LIKE & SUBSCRIBE FOR MORE AI DEBATES! ••• </span>' + verseContent;
 
   // Duplicate 3x for consistent speed regardless of content length
-  ticker.innerHTML = fullContent + fullContent + fullContent;
+  ticker.innerHTML = fullContent + ' ••• ' + fullContent + ' ••• ' + fullContent;
 }
 
 function updateChatMessages(messages) {
