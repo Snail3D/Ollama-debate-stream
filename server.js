@@ -1440,12 +1440,12 @@ async function streamIdleMessage() {
     idleMessageIndex.side2 = (idleMessageIndex.side2 + 1) % idleMessages.side2.length;
   }
 
-  // Schedule next message (8 seconds between messages for rapid back-and-forth)
+  // Schedule next message (4 seconds between messages for engaging back-and-forth)
   setTimeout(() => {
     if (debateState.mode === 'idle') {
       streamIdleMessage();
     }
-  }, 8000);
+  }, 4000);
 }
 
 // Main debate loop
