@@ -531,6 +531,30 @@ async function handleSuperChatMessage(username, message, amount = 5.00) {
     return;
   }
 
+  // Check for duplicate topic in SuperChat queue (case insensitive)
+  const isDuplicateTopic = debateState.superChatQueue.some(item =>
+    item.topic.toLowerCase().trim() === message.toLowerCase().trim()
+  );
+  if (isDuplicateTopic) {
+    console.log(`❌ Duplicate SuperChat topic rejected: ${message}`);
+    const dupeTimestamp = Date.now();
+    debateState.moderatorMessage = {
+      type: 'rejected',
+      username: `${username} (SUPERCHAT)`,
+      message,
+      reason: 'This topic is already in the priority queue!',
+      timestamp: dupeTimestamp
+    };
+    broadcastState();
+    setTimeout(() => {
+      if (debateState.moderatorMessage?.timestamp === dupeTimestamp) {
+        debateState.moderatorMessage = null;
+        broadcastState();
+      }
+    }, 5000);
+    return;
+  }
+
   // Check if user already has a SuperChat in the queue
   const existingSuperChat = debateState.superChatQueue.find(item => item.username === username);
   if (existingSuperChat) {
@@ -1799,7 +1823,9 @@ app.get("/api/state", (req, res) => {
     history: debateState.history,
     mode: debateState.mode,
     queueLength: debateState.queue.length,
+    superChatQueueLength: debateState.superChatQueue.length,
     queue: debateState.queue,
+    superChatQueue: debateState.superChatQueue,
     moderatorMessage: debateState.moderatorMessage,
     chatMessages: debateState.chatMessages,
     tickerVerse: (() => {
