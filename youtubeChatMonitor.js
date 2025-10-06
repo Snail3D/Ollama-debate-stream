@@ -102,6 +102,16 @@ export class YouTubeChatMonitor {
           console.log(`Admin command from ${username}: ${text}`);
           this.messageCallback(username, text);
         }
+        // Check for random topic requests (pass through as-is)
+        else if (text.toLowerCase().trim() === 'random' ||
+                 text.toLowerCase().trim() === 'random debate' ||
+                 text.toLowerCase().trim() === 'random topic' ||
+                 text.toLowerCase().trim() === 'random question' ||
+                 text.toLowerCase().trim() === 'surprise me' ||
+                 text.toLowerCase().trim() === 'dealers choice') {
+          console.log(`YouTube random request from ${username}: ${text}`);
+          this.messageCallback(username, text);
+        }
         // Regular messages - accept "debate" with space, comma, or just the word
         else if (text.toLowerCase().includes('debate')) {
           // Find where "debate" starts and extract topic after it
