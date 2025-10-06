@@ -1060,73 +1060,34 @@ function handleYouTubeMessage(username, message) {
         console.log(`🎲 ${username} rolled AI random topic: "${randomTopic}"`);
         postBotMessage(`🎲 ${username} rolled the AI dice! Got: "${randomTopic}"`);
 
-        // Add to queue - check if admin for priority
-        if (isAdmin) {
-          // For admins, add to SuperChat queue with isRandom flag
-          const filterResult = contentFilter.checkTopic(randomTopic);
-          if (filterResult.allowed) {
-            const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
-            debateState.superChatQueue.push({
-              topic: cleanedTopic,
-              username,
-              amount: 1.00,
-              timestamp: Date.now(),
-              isRandom: true // Mark as random-generated
-            });
-            debateState.superChatQueue.sort((a, b) => {
-              if (b.amount !== a.amount) return b.amount - a.amount;
-              return a.timestamp - b.timestamp;
-            });
-            saveDebateState();
-            broadcastState();
-          }
-        } else {
-          // For regular users, add to normal queue
-          const filterResult = contentFilter.checkTopic(randomTopic);
-          if (filterResult.allowed) {
-            const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
-            debateState.queue.push({
-              topic: cleanedTopic,
-              username,
-              timestamp: Date.now(),
-              isRandom: true // Mark as random-generated
-            });
-            saveDebateState();
-            broadcastState();
-          }
-        }
-      } catch (error) {
-        console.error('Error generating random topic:', error);
-        // Fallback to static list
-        const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
-        postBotMessage(`🎲 ${username} rolled the dice! Got: "${randomTopic}"`);
-
-        if (isAdmin) {
-          const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
-          debateState.superChatQueue.push({
-            topic: cleanedTopic,
-            username,
-            amount: 1.00,
-            timestamp: Date.now(),
-            isRandom: true
-          });
-          debateState.superChatQueue.sort((a, b) => {
-            if (b.amount !== a.amount) return b.amount - a.amount;
-            return a.timestamp - b.timestamp;
-          });
-          saveDebateState();
-          broadcastState();
-        } else {
+        // Add to NORMAL queue (not priority queue) - random topics always queue normally
+        const filterResult = contentFilter.checkTopic(randomTopic);
+        if (filterResult.allowed) {
           const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
           debateState.queue.push({
             topic: cleanedTopic,
             username,
             timestamp: Date.now(),
-            isRandom: true
+            isRandom: true // Mark as random-generated
           });
           saveDebateState();
           broadcastState();
         }
+      } catch (error) {
+        console.error('Error generating random topic:', error);
+        // Fallback to static list - add to NORMAL queue (not priority queue)
+        const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
+        postBotMessage(`🎲 ${username} rolled the dice! Got: "${randomTopic}"`);
+
+        const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
+        debateState.queue.push({
+          topic: cleanedTopic,
+          username,
+          timestamp: Date.now(),
+          isRandom: true
+        });
+        saveDebateState();
+        broadcastState();
       }
     })();
     return;
