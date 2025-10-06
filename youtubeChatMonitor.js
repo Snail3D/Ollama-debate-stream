@@ -97,11 +97,21 @@ export class YouTubeChatMonitor {
           console.log(`💰 SUPERCHAT from ${username}: ${topic}`);
           this.superChatCallback(username, topic);
         }
-        // Regular messages need !debate command
-        else if (text.toLowerCase().startsWith('!debate ')) {
-          const topic = text.substring(8).trim();
-          console.log(`YouTube request from ${username}: ${topic}`);
-          this.messageCallback(username, topic);
+        // Admin commands starting with / (like /clear, /remove)
+        else if (text.trim().startsWith('/')) {
+          console.log(`Admin command from ${username}: ${text}`);
+          this.messageCallback(username, text);
+        }
+        // Regular messages - accept "debate" with or without !
+        else if (text.toLowerCase().includes('debate ')) {
+          // Find where "debate" starts and extract topic after it
+          const lowerText = text.toLowerCase();
+          const debateIndex = lowerText.indexOf('debate ');
+          const topic = text.substring(debateIndex + 7).trim();
+          if (topic) {
+            console.log(`YouTube request from ${username}: ${topic}`);
+            this.messageCallback(username, topic);
+          }
         }
       }
 
