@@ -188,8 +188,18 @@ function updateUI(state) {
     modeText.textContent = 'AUTO MODE';
   }
 
-  if (state.queueLength > 0) {
-    queueIndicator.textContent = `${state.queueLength} IN QUEUE`;
+  // Display both queue counts
+  let queueText = '';
+  if (state.superChatQueueLength > 0 && state.queueLength > 0) {
+    queueText = `${state.superChatQueueLength} PRIORITY | ${state.queueLength} IN QUEUE`;
+  } else if (state.superChatQueueLength > 0) {
+    queueText = `${state.superChatQueueLength} PRIORITY`;
+  } else if (state.queueLength > 0) {
+    queueText = `${state.queueLength} IN QUEUE`;
+  }
+
+  if (queueText) {
+    queueIndicator.textContent = queueText;
     queueIndicator.classList.add('active');
   } else {
     queueIndicator.classList.remove('active');
@@ -214,9 +224,7 @@ function updateUI(state) {
   document.getElementById('turnNumberHeader').textContent = state.turnNumber;
 
   // Update queue ticker
-  if (state.queue) {
-    updateQueueTicker(state.queue);
-  }
+  updateQueueTicker(state.queue, state.superChatQueue);
 
   // Update chat messages
   if (state.chatMessages) {
@@ -229,18 +237,42 @@ function updateUI(state) {
   }
 }
 
-function updateQueueTicker(queue) {
+function updateQueueTicker(queue, superChatQueue) {
   const ticker = document.getElementById('queueTicker');
 
-  if (!queue || queue.length === 0) {
+  // Combine both queues (priority first)
+  const allQueues = [];
+
+  // Add SuperChat items first (red)
+  if (superChatQueue && superChatQueue.length > 0) {
+    superChatQueue.forEach((item, index) => {
+      allQueues.push({
+        text: `💰 PRIORITY #${index + 1}: ${item.topic} ($${item.amount})`,
+        isPriority: true
+      });
+    });
+  }
+
+  // Add regular queue items (yellow)
+  if (queue && queue.length > 0) {
+    queue.forEach((item, index) => {
+      allQueues.push({
+        text: `UP NEXT #${index + 1}: ${item.topic}`,
+        isPriority: false
+      });
+    });
+  }
+
+  if (allQueues.length === 0) {
     ticker.innerHTML = '<span>[ NO DEBATES IN QUEUE ] ••• LIKE & SUBSCRIBE FOR MORE AI DEBATES!</span>';
     return;
   }
 
-  // Build ticker content
-  const items = queue.map((item, index) =>
-    `<span>UP NEXT #${index + 1}: ${item.topic}</span>`
-  ).join('');
+  // Build ticker content with color classes
+  const items = allQueues.map(item => {
+    const className = item.isPriority ? 'priority-item' : '';
+    return `<span class="${className}">${item.text}</span>`;
+  }).join('');
 
   // Add like & subscribe message at the end
   const fullContent = items + '<span>••• LIKE & SUBSCRIBE FOR MORE AI DEBATES!</span>';

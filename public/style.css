@@ -799,6 +799,12 @@ body.glitching::after {
   text-shadow: 0 0 10px #ffff00;
 }
 
+.queue-ticker .priority-item {
+  color: #ff0000;
+  text-shadow: 0 0 10px #ff0000;
+  font-weight: bold;
+}
+
 @keyframes scroll-left {
   0% {
     transform: translateX(0%);

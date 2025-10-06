@@ -531,6 +531,28 @@ async function handleSuperChatMessage(username, message, amount = 5.00) {
     return;
   }
 
+  // Check if user already has a SuperChat in the queue
+  const existingSuperChat = debateState.superChatQueue.find(item => item.username === username);
+  if (existingSuperChat) {
+    const alreadyQueuedTimestamp = Date.now();
+    debateState.moderatorMessage = {
+      type: 'already_queued',
+      username: `${username} (SUPERCHAT)`,
+      message,
+      reason: `You already have a SuperChat in queue: "${existingSuperChat.topic}"`,
+      timestamp: alreadyQueuedTimestamp
+    };
+    broadcastState();
+
+    setTimeout(() => {
+      if (debateState.moderatorMessage?.timestamp === alreadyQueuedTimestamp) {
+        debateState.moderatorMessage = null;
+        broadcastState();
+      }
+    }, 5000);
+    return;
+  }
+
   // Check superchat queue limit (max 50)
   if (debateState.superChatQueue.length >= 50) {
     const queueFullTimestamp = Date.now();
@@ -1621,7 +1643,9 @@ function broadcastState() {
     history: debateState.history, // Keep isNew flags for typewriter effect
     mode: debateState.mode,
     queueLength: debateState.queue.length,
+    superChatQueueLength: debateState.superChatQueue.length,
     queue: debateState.queue,
+    superChatQueue: debateState.superChatQueue,
     moderatorMessage: debateState.moderatorMessage,
     chatMessages: debateState.chatMessages
   };
@@ -1643,7 +1667,9 @@ wss.on('connection', (ws) => {
     history: debateState.history.map(h => ({ ...h, isNew: false })),
     mode: debateState.mode,
     queueLength: debateState.queue.length,
+    superChatQueueLength: debateState.superChatQueue.length,
     queue: debateState.queue,
+    superChatQueue: debateState.superChatQueue,
     moderatorMessage: debateState.moderatorMessage,
     chatMessages: debateState.chatMessages
   }));
