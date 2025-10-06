@@ -1005,6 +1005,29 @@ function handleYouTubeMessage(username, message) {
   const isRandomRequest = randomPatterns.some(pattern => lowerMessage === pattern);
 
   if (isRandomRequest) {
+    // Count existing random topics in both queues (track by special marker)
+    const randomTopicsInQueue = debateState.queue.filter(item => item.isRandom).length;
+    const randomTopicsInSuperChat = debateState.superChatQueue.filter(item => item.isRandom).length;
+    const totalRandoms = randomTopicsInQueue + randomTopicsInSuperChat;
+
+    // Limit: max 20 random topics across both queues
+    if (totalRandoms >= 20) {
+      postBotMessage(`🎲 Random topic limit reached (20 max). Wait for some to clear!`);
+      debateState.moderatorMessage = {
+        type: 'rejected',
+        username: username,
+        message: 'random',
+        reason: 'Too many random topics in queue (max 20)',
+        timestamp: Date.now()
+      };
+      broadcastState();
+      setTimeout(() => {
+        debateState.moderatorMessage = null;
+        broadcastState();
+      }, 5000);
+      return;
+    }
+
     // Generate a spicy debate topic using Groq AI
     (async () => {
       try {
@@ -1039,16 +1062,34 @@ function handleYouTubeMessage(username, message) {
 
         // Add to queue - check if admin for priority
         if (isAdmin) {
-          handleSuperChatMessage(username, randomTopic, 1.00);
+          // For admins, add to SuperChat queue with isRandom flag
+          const filterResult = contentFilter.checkTopic(randomTopic);
+          if (filterResult.allowed) {
+            const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
+            debateState.superChatQueue.push({
+              topic: cleanedTopic,
+              username,
+              amount: 1.00,
+              timestamp: Date.now(),
+              isRandom: true // Mark as random-generated
+            });
+            debateState.superChatQueue.sort((a, b) => {
+              if (b.amount !== a.amount) return b.amount - a.amount;
+              return a.timestamp - b.timestamp;
+            });
+            saveDebateState();
+            broadcastState();
+          }
         } else {
-          // For regular users, add to normal queue (continuing the rest of the function)
+          // For regular users, add to normal queue
           const filterResult = contentFilter.checkTopic(randomTopic);
           if (filterResult.allowed) {
             const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
             debateState.queue.push({
               topic: cleanedTopic,
               username,
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              isRandom: true // Mark as random-generated
             });
             saveDebateState();
             broadcastState();
@@ -1061,13 +1102,27 @@ function handleYouTubeMessage(username, message) {
         postBotMessage(`🎲 ${username} rolled the dice! Got: "${randomTopic}"`);
 
         if (isAdmin) {
-          handleSuperChatMessage(username, randomTopic, 1.00);
+          const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
+          debateState.superChatQueue.push({
+            topic: cleanedTopic,
+            username,
+            amount: 1.00,
+            timestamp: Date.now(),
+            isRandom: true
+          });
+          debateState.superChatQueue.sort((a, b) => {
+            if (b.amount !== a.amount) return b.amount - a.amount;
+            return a.timestamp - b.timestamp;
+          });
+          saveDebateState();
+          broadcastState();
         } else {
           const cleanedTopic = randomTopic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim();
           debateState.queue.push({
             topic: cleanedTopic,
             username,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            isRandom: true
           });
           saveDebateState();
           broadcastState();
