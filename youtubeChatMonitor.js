@@ -102,12 +102,19 @@ export class YouTubeChatMonitor {
           console.log(`Admin command from ${username}: ${text}`);
           this.messageCallback(username, text);
         }
-        // Regular messages - accept "debate" with or without !
-        else if (text.toLowerCase().includes('debate ')) {
+        // Regular messages - accept "debate" with space, comma, or just the word
+        else if (text.toLowerCase().includes('debate')) {
           // Find where "debate" starts and extract topic after it
           const lowerText = text.toLowerCase();
-          const debateIndex = lowerText.indexOf('debate ');
-          const topic = text.substring(debateIndex + 7).trim();
+          const debateIndex = lowerText.indexOf('debate');
+
+          // Skip past "debate" and any following punctuation/spaces
+          let topicStart = debateIndex + 6; // "debate" is 6 chars
+          const remainingText = text.substring(topicStart);
+
+          // Skip commas, spaces, colons, etc.
+          const topic = remainingText.replace(/^[\s,:\-]+/, '').trim();
+
           if (topic) {
             console.log(`YouTube request from ${username}: ${topic}`);
             this.messageCallback(username, topic);
