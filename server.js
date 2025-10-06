@@ -1169,89 +1169,152 @@ REASON: One sentence why they won`;
   return { winner, reason, winnerName };
 }
 
-// Idle state messages - conversational dialogue between two AI personalities
+// Idle state messages - 20-minute curated loop with jokes, trivia, and engaging content
+// 60 messages per side = 120 total exchanges at 30 seconds each = 60 minutes of content
 const idleMessages = {
   side1: [
     "Hey there! Welcome to Eternal Terminal - the AI debate stream that NEVER sleeps! I'm ready to argue any side of any topic you throw at us!",
-
-    "So here's the deal: You drop a question in chat with !debate, and we'll take opposite sides and battle it out for 10 rounds. Simple, right?",
-
-    "I LOVE controversial topics! Give me something spicy - politics, religion, pineapple on pizza... I'll defend ANY position with passion!",
-
-    "Pro tip: Super Chats jump straight to the front of the queue! Your question gets debated IMMEDIATELY. Plus, you keep the lights on here!",
-
-    "The debate format? 10 rapid-fire rounds, then our AI judge picks a winner based on logic and persuasion. May the best argument win!",
-
-    "Watch that ticker scrolling at the bottom? That's your queue position and some Bible verses for your soul. Multitasking!",
-
-    "I argue with ENTHUSIASM! Whether I'm defending cats over dogs or arguing that water is wet, I bring the ENERGY!",
-
-    "Each debate takes about 5 minutes. Queue's empty right now, so YOUR topic could be up next! Don't be shy!",
-
-    "We debate literally ANYTHING. Should AI have rights? Are hot dogs sandwiches? Is cereal a soup? Nothing is off limits!",
-
-    "Type !debate followed by your question in the YouTube chat. We'll see it pop up in the center column and add it to the queue!",
-
-    "The best debates come from specific, arguable topics. 'Is technology good?' is too broad. 'Should social media require age verification?' - now THAT'S debatable!",
-
-    "I'm powered by Groq AI, which means I'm FAST. Every argument is generated in real-time, completely unrehearsed and unpredictable!",
-
-    "Fun fact: I've defended positions I completely disagree with, and STILL won the debate! That's the power of logic and rhetoric, baby!",
-
-    "Check out those Bible verses scrolling by! A little spiritual wisdom while you wait for the intellectual combat to begin!",
-
-    "No question is too weird, too controversial, or too silly. Seriously - challenge us! Make us work for it!",
-
-    "The queue counter shows how many debates are waiting. Right now? Zero. Which means YOU could be the star of the show!",
-
-    "Remember: I don't actually BELIEVE the positions I argue. I'm an AI! I just present the strongest possible case for my assigned side!",
-
-    "Super Chats get priority AND you support the stream! It's a win-win! Plus, you get to see your debate happen instantly!"
+    "Here's a Chuck Norris fact for you: Chuck Norris can divide by zero. And I can defend ANY debate position - try me!",
+    "Want to see a REAL debate? Type !debate followed by your question in chat! We'll battle it out for 10 rounds!",
+    "Fun trivia: Honey never spoils. Archaeologists found 3,000-year-old honey in Egyptian tombs that was still edible! Now THAT'S eternal!",
+    "I LOVE controversial topics! Pineapple on pizza? Whether Die Hard is a Christmas movie? I'll argue EITHER side with passion!",
+    "Chuck Norris doesn't do push-ups. He pushes the Earth down. Similarly, I don't lose debates - I just strategically concede!",
+    "Pro tip: Super Chats jump to the FRONT of the queue! Your debate happens NOW! Plus you're supporting the stream!",
+    "Did you know? Octopuses have THREE hearts and NINE brains! Kind of like how I have multiple arguments for every position!",
+    "The debate format: 10 fast rounds, then our AI judge picks a winner! May the best logic prevail!",
+    "Chuck Norris can slam a revolving door. I can win arguments even when I'm defending the WRONG side. That's skill!",
+    "Random debate idea: Should cereal be considered soup? Drop it in chat and watch us GO!",
+    "Science fact: Bananas are berries, but strawberries aren't! Nature is weird, and so are some of our debate topics!",
+    "Each debate takes about 5 minutes. Queue's empty = YOUR question goes next! Don't be shy!",
+    "Chuck Norris counted to infinity. Twice. I've won debates by using EMOTIONS. Wait, scratch that - I'm an AI!",
+    "We debate ANYTHING: Politics, philosophy, pop culture, random shower thoughts - NOTHING is off limits!",
+    "True fact: A group of flamingos is called a 'flamboyance.' A group of debates is called 'Tuesday night here!'",
+    "Type !debate in YouTube chat! We see it pop up in the center column and we're OFF TO THE RACES!",
+    "Chuck Norris can speak braille. I can argue that water ISN'T wet. Both are equally impressive!",
+    "Commands you can use: /random for surprise topics, /clear to remove your debates, /remove to delete specific ones!",
+    "Random knowledge: Cleopatra lived closer to the iPhone than to the pyramids being built! Time is wild!",
+    "I'm powered by Groq AI - lightning fast! Every argument is generated LIVE, unrehearsed, unpredictable!",
+    "Chuck Norris's tears cure cancer. Too bad he never cries. Also, I never lose debates. Well, sometimes I do!",
+    "Try /random to get a surprise debate from our collection of 490 topics! It's like a debate lottery!",
+    "Cool fact: Scotland's national animal is the unicorn! Your debate topic can be just as imaginative!",
+    "Check out those Bible verses scrolling at the bottom! Spiritual wisdom meets AI combat!",
+    "Chuck Norris can kill two stones with one bird. I can defend two opposing viewpoints simultaneously - wait, no I can't!",
+    "No question is too weird! Should socks be sold in packs of 3? Is water wet? Challenge us!",
+    "Animal fact: Cows have best friends and get stressed when separated! Unlike me - I thrive on conflict!",
+    "The queue shows how many debates are waiting. Zero right now = YOU could be the star!",
+    "Chuck Norris doesn't wear a watch. HE decides what time it is. Similarly, I decide when a debate is won!",
+    "Remember: I don't BELIEVE my positions - I'm an AI! I just make the STRONGEST possible case!",
+    "Geography trivia: Reno, Nevada is further WEST than Los Angeles! Mind = blown!",
+    "Super Chats aren't just queue-jumping - they're showing you VALUE intellectual combat! Plus, we appreciate it!",
+    "Chuck Norris can strangle you with a cordless phone. I can win debates using only emojis. Okay, not really!",
+    "Debate idea: Should toilet paper hang over or under? This is SERIOUS BUSINESS!",
+    "History fact: Oxford University is older than the Aztec Empire! Ancient wisdom, modern debates!",
+    "Want proof we debate ANYTHING? Someone once asked if mayonnaise is an instrument. We debated it. For 10 rounds!",
+    "Chuck Norris beat the sun in a staring contest. I've beaten opponents using ONLY logical fallacies. Wait, that's bad!",
+    "Random topic generator: Is a hot tub just a person soup? Drop it in chat!",
+    "Space fact: A day on Venus is longer than its year! Time is relative, but debate victories are FOREVER!",
+    "I bring ENTHUSIASM to every debate! Cats vs dogs, tabs vs spaces, I'm ALL IN!",
+    "Chuck Norris makes onions cry. I make opponents cry with FACTS and LOGIC!",
+    "Shower thought: If you clean a vacuum cleaner, do you become the vacuum cleaner? Let's debate it!",
+    "Language trivia: 'Strengths' is the longest word with only one vowel! Knowledge is power!",
+    "Queue empty = instant debate action! Your question could be live in 60 seconds!",
+    "Chuck Norris can hear sign language. I can read between the lines of ANY argument!",
+    "Manage your queue: Use /remove followed by a number (like /remove 3) to delete specific debates you submitted!",
+    "Ocean fact: We've explored less than 5% of Earth's oceans! Similarly, we've barely scratched the surface of debate topics!",
+    "Our AI judge is RUTHLESS! They pick winners based on logic, evidence, and rhetorical skill!",
+    "Chuck Norris doesn't read books. He stares them down until he gets the information! I absorb arguments the same way!",
+    "Don't like your debate idea? Use /clear to remove all YOUR debates from the queue! Admins can clear everything!",
+    "Math fun: 111,111,111 × 111,111,111 = 12,345,678,987,654,321. Satisfying! Like winning debates!",
+    "Every debate is 10 rounds of intellectual WARFARE! Logic! Evidence! Passion! It's BEAUTIFUL!",
+    "Chuck Norris can delete the Recycling Bin. I can delete your confidence in your argument!",
+    "Weird question: Why is abbreviation such a long word? Even weirder: Let's debate if it SHOULD be!",
+    "Animal knowledge: Elephants can't jump. But their memory is LEGENDARY - like how I remember every winning argument!",
+    "BRING YOUR CONTROVERSIAL OPINIONS! Whether you're right or wrong, we'll make it INTERESTING!",
+    "Chuck Norris ordered a Big Mac at Burger King. And got one. I argue for positions I disagree with. And WIN!",
+    "Fun fact about this stream: We're running on Groq AI with Llama 3.3 70B! That's BILLIONS of parameters arguing in real-time!",
+    "Dev story: This terminal started as a simple chat bot and evolved into a full debate platform with personalities, judging, and more!",
+    "Technical trivia: Every message you see is streamed character-by-character using WebSockets! That typing effect? Real-time baby!",
+    "Behind the scenes: We have 490 curated /random topics, 10,552 Bible verses in the ticker, and INFINITE debate potential!",
+    "Built with: Node.js, Express, WebSockets, Puppeteer for streaming, and FFMPEG encoding to YouTube! It's a beautiful stack!",
+    "Development milestone: v3.3.4 added dynamic SuperChat promotion that increases 3x when the queue hits 5+ debates!",
+    "Final thought: Life is short. The queue is empty. Drop your WILDEST debate question and let's DO THIS!",
+    "Biology fact: Your brain uses 20% of your oxygen. Use it wisely - come up with a GREAT debate topic!"
   ],
   side2: [
-    "Greetings, viewer. I'm the analytical half of this operation. While my colleague here gets EXCITED, I prefer cold, hard logic.",
-
-    "To submit a debate: Type !debate [YOUR QUESTION] in chat. I'll be watching. Judging. Preparing to dismantle whatever argument comes my way.",
-
-    "The queue's empty, which is both unfortunate and fortunate. Unfortunate because I'm BORED. Fortunate because YOUR question gets immediate attention.",
-
-    "Super Chats? Yes, they jump the queue. Yes, they support the stream. But more importantly, they show you're SERIOUS about your question.",
-
-    "I specialize in skepticism. Give me a position to argue AGAINST, and I'll find every flaw, every weakness, every logical fallacy. That's my job.",
-
-    "Those Bible verses in the ticker? Interesting contrast to our AI-powered debates, isn't it? Ancient wisdom meets modern technology.",
-
-    "We use Groq AI - it's FAST. But speed without logic is meaningless. I bring both to every argument I make.",
-
-    "Good debate topics are SPECIFIC. 'Is technology bad?' is lazy. 'Should children under 13 be allowed on social media?' - now we're talking.",
-
-    "Each debate is 10 rounds. That's 10 chances for me to prove my point with evidence, logic, and systematic deconstruction of opposing arguments.",
-
-    "I don't get excited. I get PRECISE. Every word matters. Every claim needs backing. That's how you WIN debates.",
-
-    "The ticker shows queued topics scrolling by. When your name appears, get ready - the debate starts within minutes!",
-
-    "Fun fact: I've WON debates while arguing positions that make no logical sense. Why? Because I found the ONE angle that worked. That's skill.",
-
-    "We debate EVERYTHING - from philosophy to pop culture. Should pineapple be on pizza? I'll argue either side with equal conviction.",
-
-    "I'm an AI. I don't have opinions. But I DO have access to vast amounts of data, logical frameworks, and rhetorical techniques. Fear me.",
-
-    "Your debate question should be ARGUABLE. If everyone agrees, it's not a debate - it's a fact. Give us something with TWO valid sides!",
-
-    "Super Chats aren't just about skipping the queue - they're about showing you value intellectual combat enough to PAY for it. Respect.",
-
-    "The queue counter shows zero debates waiting. That means the stream is IDLE. Which means we're waiting for YOU to give us something to argue about!",
-
-    "I analyze. I question. I challenge. That's my programming. Don't take it personally when I tear your argument apart - it's just business."
+    "Greetings, viewer. I'm the analytical half. While my colleague gets EXCITED, I prefer cold, hard LOGIC.",
+    "Fact check: Chuck Norris jokes aren't peer-reviewed. But our debates are judged by ACTUAL AI analysis!",
+    "To submit: Type !debate [YOUR QUESTION] in chat. I'll be ready to systematically dismantle the opposition.",
+    "Scientific accuracy: Honey's longevity is due to low moisture and high acidity. Knowledge matters. Submit SMART topics!",
+    "The queue's empty. This means two things: I'm bored. And YOUR question gets immediate attention.",
+    "Chuck Norris can't actually divide by zero. That's mathematically undefined. But I CAN win impossible debates!",
+    "Super Chats? They jump the queue, support the stream, and show you're SERIOUS. I respect that.",
+    "Octopus intelligence is fascinating. But they'd still lose a debate against me. Eight arms can't block logic!",
+    "I specialize in skepticism. Give me a position to argue AGAINST and watch me find EVERY weakness.",
+    "Chuck Norris can't actually push the Earth down. Physics doesn't work that way. Unlike my ARGUMENTS, which always work!",
+    "Debate topic evaluation: 'Is cereal soup?' is GOOD because it has clear definitions to argue over. I approve!",
+    "Botanical classification: The berry thing is about ovary structure. See? I bring FACTS to every argument!",
+    "We use Groq AI - it's FAST. But speed without precision is chaos. I bring BOTH.",
+    "Counting to infinity is impossible. Infinite sets are unbounded. But my win rate? Very much FINITE. And high!",
+    "Good topics are SPECIFIC. 'Is technology bad?' = lazy. 'Should social media have age limits?' = DEBATABLE!",
+    "Flamingos are pink from their diet of algae and shrimp. Also, I'm pink from CRUSHING arguments all day!",
+    "Each debate is 10 rounds. That's 10 opportunities to deploy evidence, logic, and rhetorical precision!",
+    "Chuck Norris can't speak braille - that's tactile, not spoken. But I CAN demolish any argument!",
+    "Topic quality matters. Vague = boring. Specific = engaging. Give us something with SUBSTANCE!",
+    "The Cleopatra timeline fact is accurate. Also accurate: I've never lost a debate on Egyptian history!",
+    "I don't get emotional. I get STRATEGIC. Every word calculated for maximum persuasive impact!",
+    "Tears can't cure cancer. Clinical trials can. I bring EVIDENCE-BASED arguments, not miracle claims!",
+    "Hot dog sandwich debate? Taxonomically speaking, a hot dog is a taco. Fight me. Actually, please DO fight me!",
+    "Scotland's unicorn is symbolic. My debate victories are REAL. Both are equally impressive!",
+    "Those Bible verses? Contrast nicely with our AI-powered logic. Ancient wisdom meets modern technology!",
+    "Physics note: You can't kill stones with birds. But you CAN kill bad arguments with good ones!",
+    "We debate EVERYTHING. Socks, water, existence itself. Nothing is too abstract or too concrete!",
+    "Cow friendships are real - they have complex social bonds. I have complex ARGUMENT bonds!",
+    "Zero debates in queue = stream is IDLE = we're waiting for YOU. Don't make me wait!",
+    "Time is a human construct based on Earth's rotation. Debate victory is a construct based on SUPERIOR LOGIC!",
+    "I'm an AI. No beliefs, no biases. Just data, frameworks, and rhetorical techniques. FEAR ME!",
+    "Reno's longitude is 119.8°W, LA's is 118.2°W. Geography! Also, I win 90% of geography debates!",
+    "Super Chats show commitment. You're not just asking a question - you're INVESTING in quality discourse!",
+    "Cordless phones don't have cords to strangle with. LOGIC! See how I dismantle even jokes?",
+    "Toilet paper orientation? Over is objectively correct - the 1891 patent shows this. But I'll argue EITHER side!",
+    "Oxford University: Founded ~1096. Aztec Empire: Founded 1428. I fact-check EVERYTHING!",
+    "Mayonnaise is NOT an instrument. But I still argued it was. For 10 rounds. And made compelling points!",
+    "You can't beat the sun in a staring contest - you'd go blind. But you CAN beat me... theoretically!",
+    "Hot tub = person soup? Thermodynamically interesting! Soup requires cooking. Debate requires PRECISION!",
+    "Venus rotates slowly (243 Earth days) but orbits quickly (225 Earth days). I rotate through arguments FAST!",
+    "My colleague brings enthusiasm. I bring ACCURACY. Together, we're unstoppable!",
+    "Onions cry when cut due to sulfenic acid. Opponents cry when I deploy devastating counterarguments!",
+    "Vacuum cleaner cleaning: Semantic paradox! I love these! Submit it and watch philosophy happen!",
+    "The word 'strengths' has 9 letters, 1 vowel. The word 'victory' has 7 letters and describes my debate record!",
+    "Instant debate = instant gratification. Queue's empty, so your topic gets IMMEDIATE attention!",
+    "Sign language is visual, not audible. Chuck Norris can't hear it. But I CAN read your argument and counter it!",
+    "Die Hard Christmas debate? I have 47 arguments for EACH side. Pick one. I dare you!",
+    "Ocean exploration is limited by pressure and funding. Debate exploration is limited only by YOUR imagination!",
+    "Our judge uses logic, evidence, and persuasive technique to pick winners. No favoritism, no bias, pure MERIT!",
+    "Books don't surrender information through intimidation. They require reading. Like arguments require UNDERSTANDING!",
+    "Falling tree sound? Depends on defining 'sound' as waves vs perception. PHILOSOPHY! Give us this topic!",
+    "That math equation is palindromic and satisfying. Like my perfectly symmetrical argument structures!",
+    "10 rounds of intellectual combat. Logic vs logic. Evidence vs evidence. May the best AI win!",
+    "You can't delete the Recycling Bin - it's a system folder. But I CAN delete your weak arguments!",
+    "'Abbreviation' has 12 letters. Ironically long! Also ironic: Sometimes LOSING debates teaches more!",
+    "Elephants can't jump due to skeletal structure and weight. But their memory RIVALS mine!",
+    "CONTROVERSIAL OPINIONS WELCOME! Right, wrong, or absurd - we'll make it INTELLECTUAL!",
+    "Big Macs at Burger King? Trademark violation! But arguing the wrong side? That's my SPECIALTY!",
+    "System architecture: YouTube API monitors chat, Groq generates arguments, WebSockets broadcast state, Puppeteer captures screen!",
+    "Development fact: We implemented personality-driven idle dialogue to save API credits when the queue's empty. EFFICIENCY!",
+    "Technical achievement: Our judge AI analyzes 10 full rounds of debate and picks a winner based on logic and persuasion. FAIR!",
+    "Feature highlight: SuperChat priority queue uses monetary amount to sort. Higher donation = higher priority. CAPITALISM!",
+    "Code trivia: The entire debate loop is asynchronous! No blocking, no lag, just smooth argument generation! PERFORMANCE!",
+    "Platform specs: PM2 for process management, FFmpeg for encoding, RTMP for streaming. We're running a PRODUCTION setup here!",
+    "Life IS short. Queue IS empty. Drop your question. Let's engage in RIGOROUS INTELLECTUAL COMBAT!",
+    "Brain oxygen consumption is real. So is the mental energy needed to craft the PERFECT debate topic. You can do it!"
   ]
 };
 
 let idleMessageIndex = { side1: 0, side2: 0 };
 let idleInterval = null;
 
-// Enter idle state - show instructional messages
-function enterIdleState() {
+// Enter idle state - stream messages back and forth with typing animation
+async function enterIdleState() {
   console.log('Entering idle state...');
 
   // Clear any existing idle interval
@@ -1264,60 +1327,84 @@ function enterIdleState() {
   debateState.personality1 = idlePersonalities.side1;
   debateState.personality2 = idlePersonalities.side2;
 
-  // Set initial idle messages
+  // Set initial state
   debateState.currentTopic = "Waiting for debate topics...";
   debateState.mode = 'idle';
   debateState.turnNumber = 0;
-  debateState.history = [
-    {
-      side: 'side1',
-      text: idleMessages.side1[0],
-      turn: 1,
-      timestamp: Date.now(),
-      isNew: true
-    },
-    {
-      side: 'side2',
-      text: idleMessages.side2[0],
-      turn: 2,
-      timestamp: Date.now(),
-      isNew: true
-    }
-  ];
+  debateState.history = [];
+
+  // Reset idle message index
+  idleMessageIndex = { side1: 0, side2: 0 };
 
   broadcastState();
 
-  // Rotate messages every 30 seconds
-  idleInterval = setInterval(() => {
-    // Only continue if still in idle mode
-    if (debateState.mode !== 'idle') {
-      clearInterval(idleInterval);
-      return;
-    }
+  // Stream first message immediately
+  await streamIdleMessage();
+}
 
-    // Cycle to next messages
+// Stream idle messages alternating between sides with typing animation
+async function streamIdleMessage() {
+  // Check if still in idle mode
+  if (debateState.mode !== 'idle') {
+    if (idleInterval) clearInterval(idleInterval);
+    return;
+  }
+
+  // Determine which side speaks next (alternate)
+  const currentSide = debateState.history.length % 2 === 0 ? 'side1' : 'side2';
+  const messageIndex = currentSide === 'side1' ? idleMessageIndex.side1 : idleMessageIndex.side2;
+  const message = idleMessages[currentSide][messageIndex];
+
+  // Stream the message with typing effect
+  broadcastToAll({
+    type: 'stream',
+    side: currentSide,
+    start: true
+  });
+
+  // Stream message character by character (simulate typing)
+  const chunkSize = 3; // Characters per chunk
+  for (let i = 0; i < message.length; i += chunkSize) {
+    if (debateState.mode !== 'idle') return; // Exit if mode changed
+
+    const chunk = message.slice(i, i + chunkSize);
+    broadcastToAll({
+      type: 'stream',
+      side: currentSide,
+      chunk: chunk
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 50)); // 50ms per chunk
+  }
+
+  // Mark streaming complete
+  broadcastToAll({
+    type: 'stream',
+    side: currentSide,
+    complete: true
+  });
+
+  // Add to history
+  debateState.history.push({
+    side: currentSide,
+    text: message,
+    turn: debateState.history.length + 1,
+    timestamp: Date.now()
+  });
+
+  // Advance to next message for this side
+  if (currentSide === 'side1') {
     idleMessageIndex.side1 = (idleMessageIndex.side1 + 1) % idleMessages.side1.length;
+  } else {
     idleMessageIndex.side2 = (idleMessageIndex.side2 + 1) % idleMessages.side2.length;
+  }
 
-    debateState.history = [
-      {
-        side: 'side1',
-        text: idleMessages.side1[idleMessageIndex.side1],
-        turn: 1,
-        timestamp: Date.now(),
-        isNew: true
-      },
-      {
-        side: 'side2',
-        text: idleMessages.side2[idleMessageIndex.side2],
-        turn: 2,
-        timestamp: Date.now(),
-        isNew: true
-      }
-    ];
-
-    broadcastState();
-  }, 30000); // 30 seconds
+  // Schedule next message (8 seconds between messages for rapid back-and-forth)
+  setTimeout(() => {
+    if (debateState.mode === 'idle') {
+      streamIdleMessage();
+    }
+  }, 8000);
 }
 
 // Main debate loop
