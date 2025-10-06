@@ -82,10 +82,12 @@ function handleStreamChunk(data) {
       argBox.innerHTML = `<div class="argument-text">${streamingText}<span class="typing-cursor"></span></div>`;
     }
 
-    // Auto-scroll
+    // Auto-scroll - use requestAnimationFrame for smoother scrolling
     const containerName = getSideContainer(data.side);
     const container = document.getElementById(`${containerName}Arguments`);
-    container.scrollTop = container.scrollHeight;
+    requestAnimationFrame(() => {
+      container.scrollTop = container.scrollHeight;
+    });
   }
 
   if (data.complete) {
@@ -144,7 +146,8 @@ function showWinner(data) {
   const winnerSide = document.getElementById('winnerSide');
   const winnerReason = document.getElementById('winnerReason');
 
-  winnerSide.textContent = data.winner.toUpperCase();
+  // Use winnerName if available, otherwise fall back to winner
+  winnerSide.textContent = (data.winnerName || data.winner).toUpperCase();
   winnerSide.className = `winner-side ${data.winner}`;
 
   // Typewriter effect for the reason
@@ -437,10 +440,12 @@ function typewriterEffect(element, text) {
       cursor.before(document.createTextNode(char));
       index++;
 
-      // Auto-scroll
+      // Auto-scroll with requestAnimationFrame
       const container = element.closest('.debate-side');
       if (container) {
-        container.scrollTop = container.scrollHeight;
+        requestAnimationFrame(() => {
+          container.scrollTop = container.scrollHeight;
+        });
       }
     } else {
       cursor.remove();

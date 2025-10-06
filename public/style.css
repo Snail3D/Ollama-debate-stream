@@ -526,7 +526,7 @@ body.glitching::after {
 
 .argument-text {
   font-size: 1.375em;
-  line-height: 1.6;
+  line-height: 2.0;
   font-weight: bold;
   white-space: pre-wrap;
   word-wrap: break-word;
