@@ -112,8 +112,9 @@ export class YouTubeChatMonitor {
           let topicStart = debateIndex + 6; // "debate" is 6 chars
           const remainingText = text.substring(topicStart);
 
-          // Skip commas, spaces, colons, etc.
-          const topic = remainingText.replace(/^[\s,:\-]+/, '').trim();
+          // Skip commas, spaces, colons, etc. and strip brackets/parens that users might include
+          let topic = remainingText.replace(/^[\s,:\-]+/, '').trim();
+          topic = topic.replace(/^[\[\(<]+|[\]\)>]+$/g, '').trim(); // Remove leading/trailing brackets
 
           if (topic) {
             console.log(`YouTube request from ${username}: ${topic}`);
