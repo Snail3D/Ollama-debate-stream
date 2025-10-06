@@ -178,31 +178,38 @@ function updateUI(state) {
     topicDisplay.textContent = 'INITIALIZING...';
   }
 
-  // Update mode indicator
-  const modeText = document.getElementById('modeText');
+  // Update queue display
   const queueIndicator = document.getElementById('queueIndicator');
 
-  if (state.mode === 'user') {
-    modeText.textContent = 'USER REQUEST MODE';
-  } else {
-    modeText.textContent = 'AUTO MODE';
-  }
-
-  // Display both queue counts
+  // Display both queue counts with bigger text
   let queueText = '';
   if (state.superChatQueueLength > 0 && state.queueLength > 0) {
-    queueText = `${state.superChatQueueLength} PRIORITY | ${state.queueLength} IN QUEUE`;
+    queueText = `💰 ${state.superChatQueueLength} SUPER | 📋 ${state.queueLength} QUEUE`;
   } else if (state.superChatQueueLength > 0) {
-    queueText = `${state.superChatQueueLength} PRIORITY`;
+    queueText = `💰 ${state.superChatQueueLength} SUPER QUEUE`;
   } else if (state.queueLength > 0) {
-    queueText = `${state.queueLength} IN QUEUE`;
+    queueText = `📋 ${state.queueLength} IN QUEUE`;
+  } else {
+    queueText = 'NO DEBATES QUEUED';
   }
 
-  if (queueText) {
-    queueIndicator.textContent = queueText;
-    queueIndicator.classList.add('active');
+  queueIndicator.textContent = queueText;
+  queueIndicator.classList.add('active');
+
+  // Update personality labels
+  const proLabel = document.getElementById('proLabel');
+  const conLabel = document.getElementById('conLabel');
+
+  if (state.personality1 && state.personality1.name) {
+    proLabel.textContent = state.personality1.name.toUpperCase();
   } else {
-    queueIndicator.classList.remove('active');
+    proLabel.textContent = 'PRO';
+  }
+
+  if (state.personality2 && state.personality2.name) {
+    conLabel.textContent = state.personality2.name.toUpperCase();
+  } else {
+    conLabel.textContent = 'CON';
   }
 
   // Update moderator message

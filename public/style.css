@@ -169,30 +169,22 @@ body.glitching::after {
   letter-spacing: 0.1em;
 }
 
-.mode-indicator {
+.queue-display {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
-  font-size: 1em;
-}
-
-#modeText {
-  padding: 5px 15px;
-  border: 1px solid #00ff00;
-  text-shadow: 0 0 5px #00ff00;
+  margin-top: 10px;
 }
 
 #queueIndicator {
-  padding: 5px 15px;
-  border: 1px solid #00ff00;
-  color: #ffff00;
-  text-shadow: 0 0 5px #ffff00;
-  display: none;
-}
-
-#queueIndicator.active {
-  display: inline-block;
+  padding: 8px 20px;
+  border: 2px solid #00ff00;
+  color: #00ff00;
+  text-shadow: 0 0 10px #00ff00;
+  font-size: 1.4em;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  background: rgba(0, 255, 0, 0.1);
   animation: blink 2.5s ease-in-out infinite;
 }
 
@@ -219,11 +211,27 @@ body.glitching::after {
 }
 
 .turn-counter-header {
-  font-size: 0.8em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.round-label {
+  font-size: 1em;
   font-weight: bold;
   color: #00ff00;
   text-shadow: 0 0 10px #00ff00;
   letter-spacing: 0.2em;
+}
+
+.round-number {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: #00ff00;
+  text-shadow: 0 0 15px #00ff00;
+  letter-spacing: 0.1em;
+  line-height: 1;
 }
 
 /* Debate Arena */

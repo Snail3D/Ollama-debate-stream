@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Eternal Terminal</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3.3.0">
 </head>
 <body>
   <div class="container">
@@ -23,7 +23,7 @@
       <!-- PRO Side (LEFT) -->
       <div class="debate-side pro-side">
         <div class="side-header pro-header">
-          <div class="side-label">PRO</div>
+          <div id="proLabel" class="side-label">PRO</div>
           <div id="proIndicator" class="turn-indicator">●</div>
         </div>
         <div id="proArguments"></div>
@@ -40,10 +40,10 @@
           </div>
           <div class="debate-info">
             <div class="turn-counter-header">
-              ROUND <span id="turnNumberHeader">0</span>/10
+              <div class="round-label">ROUND</div>
+              <div class="round-number"><span id="turnNumberHeader">0</span>/10</div>
             </div>
-            <div class="mode-indicator">
-              <span id="modeText">AUTO MODE</span>
+            <div class="queue-display">
               <span id="queueIndicator"></span>
             </div>
           </div>
@@ -64,7 +64,7 @@
       <!-- CON Side (RIGHT) -->
       <div class="debate-side con-side">
         <div class="side-header con-header">
-          <div class="side-label">CON</div>
+          <div id="conLabel" class="side-label">CON</div>
           <div id="conIndicator" class="turn-indicator">●</div>
         </div>
         <div id="conArguments"></div>
@@ -92,6 +92,6 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=3.3.0"></script>
 </body>
 </html>

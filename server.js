@@ -234,14 +234,14 @@ setInterval(() => {
 // Bot announcement hooks - variety of phrases
 const botHooks = {
   superChatPromo: [
-    'Want instant debate priority? Use SUPERCHAT to skip the queue!',
-    'SUPERCHATS get immediate attention - your debate starts NOW!',
-    'Skip the line! SUPERCHATS interrupt current debates instantly!',
-    'Got a burning question? SUPERCHAT for instant debate priority!',
-    'SUPERCHATS = Instant priority! No waiting, just debating!',
-    'Premium priority! SUPERCHAT to start your debate immediately!',
-    'SUPERCHATS launch debates instantly - no queue, no wait!',
-    '👑 VIP treatment! SUPERCHAT to cancel current debate & start yours!',
+    'Want priority in the queue? Use SUPERCHAT to jump to the front!',
+    'SUPERCHATS get priority placement - front of the line!',
+    'Skip the wait! SUPERCHATS go to the front of the priority queue!',
+    'Got a burning question? SUPERCHAT for priority queue placement!',
+    'SUPERCHATS = Priority queue! Your debate is answered next!',
+    'Premium priority! SUPERCHAT to get to the front of the line!',
+    'SUPERCHATS get VIP priority - answered before regular queue!',
+    '👑 VIP treatment! SUPERCHAT to jump the queue & get answered next!',
     '⭐ Want the spotlight? SUPERCHAT for immediate debate action!',
     '💥 SUPERCHATS = Instant debates! Cut the line, start the discussion!'
   ],
@@ -613,27 +613,6 @@ async function handleSuperChatMessage(username, message, amount = 5.00) {
     if (b.amount !== a.amount) return b.amount - a.amount;
     return a.timestamp - b.timestamp;
   });
-
-  // Save current debate if one is active (not SuperChat mode and has history)
-  if (debateState.currentTopic && debateState.history.length > 0 && debateState.mode !== 'superchat') {
-    console.log(`Interrupting current debate to save for later: "${debateState.currentTopic}"`);
-    debateState.interruptedDebate = {
-      topic: debateState.currentTopic,
-      username: debateState.mode === 'user' ? 'INTERRUPTED' : 'AUTO',
-      history: [...debateState.history],
-      turnNumber: debateState.turnNumber,
-      currentSide: debateState.currentSide,
-      personality1: debateState.personality1,
-      personality2: debateState.personality2,
-      timestamp: Date.now()
-    };
-  }
-
-  // Clear current debate state
-  debateState.currentTopic = null;
-  debateState.history = [];
-  debateState.turnNumber = 0;
-  debateState.isProcessing = false;
 
   // Show thank you message
   const thanksMessage = getRandomHook('superChatThanks').replace('{username}', username);
@@ -1334,14 +1313,14 @@ async function debateLoop() {
   console.log('Debate loop triggered. isProcessing:', debateState.isProcessing);
   if (debateState.isProcessing) return;
 
-  // Skip if in idle mode and no queue items
-  if (debateState.mode === 'idle' && debateState.queue.length === 0) {
+  // Skip if in idle mode and no queue items (check both queues)
+  if (debateState.mode === 'idle' && debateState.queue.length === 0 && debateState.superChatQueue.length === 0) {
     console.log('In idle mode, skipping debate loop...');
     return;
   }
 
-  // Exit idle mode if we have queue items
-  if (debateState.mode === 'idle' && debateState.queue.length > 0) {
+  // Exit idle mode if we have queue items (check both queues)
+  if (debateState.mode === 'idle' && (debateState.queue.length > 0 || debateState.superChatQueue.length > 0)) {
     console.log('Exiting idle mode - queue has items');
     if (idleInterval) {
       clearInterval(idleInterval);
