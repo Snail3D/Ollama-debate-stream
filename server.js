@@ -925,7 +925,9 @@ function handleYouTubeMessage(username, message) {
   // Handle /remove <number> command (admin removes any, users remove their own)
   if (message.trim().toLowerCase().startsWith('/remove ')) {
     const parts = message.trim().split(/\s+/);
-    const queueNumber = parseInt(parts[1]);
+    // Strip brackets and other characters that users might include: [#], <#>, (#), #
+    const numberStr = parts[1]?.replace(/[\[\]<>()#]/g, '');
+    const queueNumber = parseInt(numberStr);
 
     if (isNaN(queueNumber) || queueNumber < 1 || queueNumber > debateState.queue.length) {
       if (debateState.queue.length === 0) {
