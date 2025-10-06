@@ -71,8 +71,14 @@ function handleStreamChunk(data) {
     argBox.id = `streaming-${data.side}`;
     container.appendChild(argBox);
 
-    // Auto-scroll to bottom
+    // Auto-scroll to bottom - multiple attempts for reliability
     container.scrollTop = container.scrollHeight;
+    setTimeout(() => {
+      container.scrollTop = container.scrollHeight;
+    }, 50);
+    setTimeout(() => {
+      container.scrollTop = container.scrollHeight;
+    }, 150);
   }
 
   if (data.chunk) {
@@ -99,6 +105,13 @@ function handleStreamChunk(data) {
     }
     currentStreamingSide = null;
     streamingText = '';
+
+    // Final scroll after completion
+    const containerName = getSideContainer(data.side);
+    const container = document.getElementById(`${containerName}Arguments`);
+    setTimeout(() => {
+      container.scrollTop = container.scrollHeight;
+    }, 100);
   }
 }
 
