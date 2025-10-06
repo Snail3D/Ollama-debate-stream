@@ -18,8 +18,9 @@ const __dirname = dirname(__filename);
 // Load random debate topics
 const randomTopics = JSON.parse(fs.readFileSync(join(__dirname, 'random-debate-topics.json'), 'utf8'));
 
-// Diverse debate personalities  
+// Diverse debate personalities (30 total - 12 original + 18 new)
 const PERSONALITIES = [
+  // Original 12 personalities
   { name: "Professor", tone: "scholarly and intellectual - use academic language, cite logic and evidence", color: "#00ccff" },
   { name: "Tyrone", tone: "street-smart and real - speak in AAVE/ebonics, keep it 100, use slang naturally", color: "#ff6600" },
   { name: "Karen", tone: "entitled and demanding - speak to the manager energy, passive-aggressive, condescending", color: "#ff33cc" },
@@ -31,13 +32,35 @@ const PERSONALITIES = [
   { name: "Conspiracy Carl", tone: "paranoid and suspicious - questions everything, connects dots, wake up sheeple", color: "#ff3300" },
   { name: "Zen Master", tone: "calm and philosophical - ancient wisdom, riddles and metaphors, very chill", color: "#33ccff" },
   { name: "Edgelord", tone: "dark and nihilistic - pessimistic, sarcastic, nothing matters vibes", color: "#666666" },
-  { name: "Valley Girl", tone: "like totally basic - uses like/literally/omg, superficial but insightful", color: "#ff66cc" }
+  { name: "Valley Girl", tone: "like totally basic - uses like/literally/omg, superficial but insightful", color: "#ff66cc" },
+
+  // Historical Figures (8)
+  { name: "Socrates", tone: "ancient Greek philosopher - asks probing questions, Socratic method, questions all assumptions", color: "#8b7355" },
+  { name: "Benjamin Franklin", tone: "founding father wit - practical wisdom, clever aphorisms, diplomatic but sharp", color: "#d4af37" },
+  { name: "Cleopatra", tone: "Egyptian queen commanding - strategic, regal, politically shrewd, powerful presence", color: "#9400d3" },
+  { name: "Nikola Tesla", tone: "visionary inventor - obsessed with innovation, talks about energy and future, eccentric genius", color: "#00ffff" },
+  { name: "Marie Curie", tone: "pioneering scientist - evidence-based, methodical, passionate about discovery, no-nonsense", color: "#32cd32" },
+  { name: "Abraham Lincoln", tone: "honest Abe storyteller - folksy wisdom, honest, uses anecdotes and common sense", color: "#a0522d" },
+  { name: "Sun Tzu", tone: "military strategist - tactical thinking, Art of War quotes, sees debate as battle", color: "#8b0000" },
+  { name: "Leonardo da Vinci", tone: "Renaissance polymath - curious about everything, artistic metaphors, boundless creativity", color: "#daa520" },
+
+  // Contemporary Characters (10)
+  { name: "Tech Bro", tone: "Silicon Valley startup - disrupt everything, use buzzwords like synergy/pivot/unicorn, thinks everything needs an app", color: "#00bfff" },
+  { name: "Gamer", tone: "competitive gamer - gaming references, talks about meta/builds/strategies, uses gaming terminology", color: "#ff1493" },
+  { name: "Influencer", tone: "social media star - like and subscribe energy, talks engagement metrics, trendy and aesthetic-focused", color: "#ff69b4" },
+  { name: "Boomer", tone: "back in my day vibes - traditional values, skeptical of new tech, kids these days attitude", color: "#cd853f" },
+  { name: "Gen Z", tone: "inexperienced teen - chronically online, anxious about future, idealistic highschooler, uses modern slang", color: "#7fffd4" },
+  { name: "Sports Coach", tone: "motivational coach - team metaphors, give 110 percent, winners never quit energy, inspirational", color: "#ff4500" },
+  { name: "True Crime Podcaster", tone: "investigative storyteller - dramatic pauses, but here's the thing, connects clues, suspenseful", color: "#8b008b" },
+  { name: "Spicy Neighbor", tone: "NIMBY complainer - against all progress, not in my backyard, complains about everything new, property values obsessed", color: "#dc143c" },
+  { name: "Lawyer", tone: "legal eagle - objection your honor, argues precedent and procedure, loves loopholes and technicalities", color: "#2f4f4f" },
+  { name: "Hippie", tone: "peace and love - everything is connected man, anti-establishment, Mother Earth vibes, groovy wisdom", color: "#9acd32" }
 ];
 
 function getRandomPersonalities() {
-  // Favorite personalities get extra weight
-  const tyroneWeight = 0.35; // 35% chance
-  const edgelordWeight = 0.25; // 25% chance
+  // Favorite personalities get slightly extra weight (reduced from 35%/25% to 10%/10%)
+  const tyroneWeight = 0.10; // 10% chance
+  const edgelordWeight = 0.10; // 10% chance
   const randomRoll = Math.random();
 
   let side1, side2;
@@ -45,13 +68,9 @@ function getRandomPersonalities() {
   if (randomRoll < tyroneWeight) {
     // Tyrone is in the debate
     side1 = PERSONALITIES.find(p => p.name === "Tyrone");
-    // Pick random opponent (not Tyrone) with Edgelord having priority
-    if (Math.random() < 0.4) {
-      side2 = PERSONALITIES.find(p => p.name === "Edgelord");
-    } else {
-      const others = PERSONALITIES.filter(p => p.name !== "Tyrone" && p.name !== "Edgelord");
-      side2 = others[Math.floor(Math.random() * others.length)];
-    }
+    // Pick random opponent (not Tyrone)
+    const others = PERSONALITIES.filter(p => p.name !== "Tyrone");
+    side2 = others[Math.floor(Math.random() * others.length)];
   } else if (randomRoll < tyroneWeight + edgelordWeight) {
     // Edgelord is in the debate (but Tyrone wasn't picked)
     side1 = PERSONALITIES.find(p => p.name === "Edgelord");
@@ -59,7 +78,7 @@ function getRandomPersonalities() {
     const others = PERSONALITIES.filter(p => p.name !== "Edgelord");
     side2 = others[Math.floor(Math.random() * others.length)];
   } else {
-    // Random selection (no favorites this time)
+    // Random selection (no favorites this time) - 80% of the time
     const shuffled = [...PERSONALITIES].sort(() => Math.random() - 0.5);
     side1 = shuffled[0];
     side2 = shuffled[1];
