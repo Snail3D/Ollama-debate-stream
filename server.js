@@ -1,3 +1,30 @@
+// ============================================================================
+// ETERNAL TERMINAL - AI DEBATE STREAM SERVER
+// ============================================================================
+//
+// This is the main server file for the Eternal Terminal debate streaming system.
+// It handles YouTube chat integration, AI-powered debates, WebSocket streaming,
+// and all real-time interactions.
+//
+// TABLE OF CONTENTS:
+// 1. Dependencies & Setup (lines 1-100)
+// 2. Debate Personalities (lines 100-200)
+// 3. State Management (lines 200-300)
+// 4. Hooks & Messages (lines 300-500)
+// 5. Chat Handlers (lines 500-800)
+// 6. YouTube Chat Commands (lines 800-1200)
+// 7. AI Generation Functions (lines 1200-1600)
+// 8. Idle Mode (lines 1600-1700)
+// 9. Debate Loop (lines 1700-2000)
+// 10. API Endpoints (lines 2000-2300)
+// 11. Server Startup (lines 2300+)
+//
+// ============================================================================
+
+// ============================================================================
+// 1. DEPENDENCIES & SETUP
+// ============================================================================
+
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import http from 'http';
@@ -11,14 +38,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load random debate topics
+// Load random debate topics from JSON file
 const randomTopics = JSON.parse(fs.readFileSync(join(__dirname, 'random-debate-topics.json'), 'utf8'));
 
-// Diverse debate personalities (40 total for AI-powered personality matching!)
+// ============================================================================
+// 2. DEBATE PERSONALITIES
+// ============================================================================
+// 40 unique AI debate personalities with distinct tones and speaking styles
+// Used for AI-powered personality matching based on debate topic
+
 const PERSONALITIES = [
   // Original 12 personalities
   { name: "Professor", tone: "scholarly and intellectual - use academic language, cite logic and evidence", color: "#00ccff" },
@@ -198,8 +229,9 @@ app.use(express.static('public'));
 
 
 // ============================================================================
-// CONFIGURATION - SINGLE SOURCE OF TRUTH
+// 3. STATE MANAGEMENT & CONFIGURATION
 // ============================================================================
+// CONFIGURATION - SINGLE SOURCE OF TRUTH
 // ALL configuration comes from .env file for consistency across deployments
 //
 // IMPORTANT: When updating stream settings, update these locations:
@@ -316,7 +348,11 @@ setInterval(() => {
   console.log(`Cleaned up old usernames. Currently tracking: ${seenUsernames.size}`);
 }, 3600000); // 1 hour
 
-// Bot announcement hooks - variety of phrases
+// ============================================================================
+// 4. HOOKS & AUTOMATED MESSAGES
+// ============================================================================
+// Randomized messages for bot announcements, SuperChat promos, welcomes, etc.
+
 const botHooks = {
   superChatPromo: [
     'Want priority in the queue? Use SUPERCHAT to jump to the front!',
@@ -545,6 +581,10 @@ function scheduleNextCoolMessage() {
 
 // Start the random cool message cycle
 scheduleNextCoolMessage();
+
+// ============================================================================
+// 5. CHAT HANDLERS
+// ============================================================================
 
 // Handle all YouTube chat messages for display
 function handleChatMessage(username, text) {
@@ -856,6 +896,11 @@ async function streamChatResponse(text) {
   
   broadcastState();
 }
+
+// ============================================================================
+// 6. YOUTUBE CHAT COMMANDS
+// ============================================================================
+
 // Handle YouTube chat messages
 function handleYouTubeMessage(username, message) {
   message = stripEmojis(message);
@@ -1196,6 +1241,10 @@ function handleYouTubeMessage(username, message) {
   }, 5000);
 }
 
+// ============================================================================
+// 7. AI GENERATION FUNCTIONS
+// ============================================================================
+
 // Groq API call with streaming
 async function callGroqStream(prompt, model, onChunk) {
   try {
@@ -1500,6 +1549,10 @@ const idleMessages = {
 let idleMessageIndex = { side1: 0, side2: 0 };
 let idleInterval = null;
 
+// ============================================================================
+// 8. IDLE MODE
+// ============================================================================
+
 // Enter idle state - stream messages back and forth with typing animation
 async function enterIdleState() {
   console.log('Entering idle state...');
@@ -1593,6 +1646,10 @@ async function streamIdleMessage() {
     }
   }, 4000);
 }
+
+// ============================================================================
+// 9. DEBATE LOOP
+// ============================================================================
 
 // Main debate loop
 async function debateLoop() {
@@ -1948,6 +2005,10 @@ function broadcastState() {
   broadcastToAll(state);
 }
 
+// ============================================================================
+// 10. API ENDPOINTS
+// ============================================================================
+
 // WebSocket connection
 wss.on('connection', (ws) => {
   console.log('Client connected');
@@ -2239,6 +2300,10 @@ app.post('/api/superchat', express.json(), async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ============================================================================
+// 11. SERVER STARTUP & MONITORING
+// ============================================================================
 
 // Start debate loop - run first debate immediately, then every interval
 debateLoop();
