@@ -1076,7 +1076,7 @@ function handleYouTubeMessage(username, message) {
     // Generate a spicy debate topic using Groq AI
     (async () => {
       try {
-        const prompt = "Generate ONE spicy, controversial, or thought-provoking debate topic. Keep it under 12 words. Make it engaging and fun! Only respond with the topic itself, nothing else.";
+        const prompt = "Generate ONE spicy, controversial, or thought-provoking debate topic. Keep it under 12 words. Make it engaging and fun! Only respond with the topic itself, nothing else.\n\nIMPORTANT: DO NOT generate topics about:\n- Space, astronomy, or NASA\n- Religion, God, or spirituality\n- Climate change, global warming, or environmental issues\n- LGBTQ+ rights, gay marriage, or sexual orientation\n- Abortion or reproductive rights\n\nFocus on: Technology, food debates, pop culture, philosophy, ethics, science (non-climate), social media, entertainment, everyday life choices.";
 
         const response = await groq.chat.completions.create({
           messages: [{ role: 'user', content: prompt }],
@@ -1085,7 +1085,38 @@ function handleYouTubeMessage(username, message) {
           max_tokens: 50
         });
 
-        const randomTopic = response.choices[0]?.message?.content?.trim() || randomTopics[Math.floor(Math.random() * randomTopics.length)];
+        let randomTopic = response.choices[0]?.message?.content?.trim() || randomTopics[Math.floor(Math.random() * randomTopics.length)];
+
+        // Filter out forbidden topics (space, religion, climate, gay rights, abortion)
+        const forbiddenKeywords = [
+          'space', 'nasa', 'astronaut', 'planet', 'mars', 'moon', 'galaxy', 'universe', 'cosmic', 'alien',
+          'god', 'religion', 'religious', 'church', 'christian', 'muslim', 'islam', 'jew', 'jewish', 'bible', 'prayer', 'faith', 'spiritual',
+          'climate', 'global warming', 'greenhouse', 'carbon', 'emissions', 'fossil fuel',
+          'gay', 'lgbtq', 'transgender', 'homosexual', 'same-sex', 'sexual orientation',
+          'abortion', 'pro-life', 'pro-choice', 'reproductive rights', 'roe v wade'
+        ];
+
+        const topicLower = randomTopic.toLowerCase();
+        const containsForbidden = forbiddenKeywords.some(keyword => topicLower.includes(keyword));
+
+        if (containsForbidden) {
+          console.log(`🚫 Generated topic contained forbidden keywords, regenerating...`);
+          // Fallback to a safe topic
+          const safeTopics = [
+            'Should pineapple be allowed on pizza?',
+            'Are hot dogs sandwiches?',
+            'Is cereal a soup?',
+            'Should toilet paper hang over or under?',
+            'Is water wet?',
+            'Should socks be sold in packs of three?',
+            'Is a hot tub just person soup?',
+            'Should tabs or spaces be used for code indentation?',
+            'Are submarines just underwater airplanes?',
+            'Should you eat pizza crust first?'
+          ];
+          randomTopic = safeTopics[Math.floor(Math.random() * safeTopics.length)];
+          console.log(`✅ Using safe fallback topic: "${randomTopic}"`);
+        }
 
         // Show banner notification
         debateState.moderatorMessage = {
