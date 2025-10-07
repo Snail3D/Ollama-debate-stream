@@ -1825,6 +1825,12 @@ async function debateLoop() {
       isNew: true  // Mark as new for typewriter effect
     });
 
+    // Safety: Limit history to prevent memory issues (should never exceed 20 in normal operation)
+    if (debateState.history.length > 50) {
+      console.warn(`⚠️ History exceeded 50 entries (${debateState.history.length}), trimming...`);
+      debateState.history = debateState.history.slice(-20);
+    }
+
     // Broadcast immediately so the response shows up
     broadcastState();
 
@@ -2242,9 +2248,54 @@ setInterval(debateLoop, config.debateInterval);
 // const portInUse = await checkPortInUse(config.port);
 // if (portInUse) { process.exit(1); }
 
+// Memory monitoring and auto-cleanup for long-term stability
+setInterval(() => {
+  const memUsage = process.memoryUsage();
+  const heapUsedMB = (memUsage.heapUsed / 1024 / 1024).toFixed(2);
+  const heapTotalMB = (memUsage.heapTotal / 1024 / 1024).toFixed(2);
+
+  console.log(`📊 Memory: ${heapUsedMB}MB / ${heapTotalMB}MB | History: ${debateState.history.length} | Chat: ${debateState.chatMessages.length} | Queue: ${debateState.queue.length} | SuperChat: ${debateState.superChatQueue.length}`);
+
+  // Emergency cleanup if memory exceeds 400MB (safety threshold)
+  if (memUsage.heapUsed > 400 * 1024 * 1024) {
+    console.warn('⚠️ HIGH MEMORY USAGE - Running emergency cleanup...');
+
+    // Force garbage collection if available
+    if (global.gc) {
+      global.gc();
+      console.log('✅ Garbage collection triggered');
+    }
+
+    // Trim arrays to safe sizes
+    if (debateState.history.length > 20) {
+      debateState.history = debateState.history.slice(-10);
+      console.log('✅ History trimmed to 10 entries');
+    }
+
+    if (debateState.chatMessages.length > 50) {
+      debateState.chatMessages = debateState.chatMessages.slice(-30);
+      console.log('✅ Chat messages trimmed to 30 entries');
+    }
+  }
+}, 10 * 60 * 1000); // Check every 10 minutes
+
+// Global error handlers for long-term stability
+process.on('uncaughtException', (error) => {
+  console.error('🚨 Uncaught Exception:', error);
+  console.error('Stack:', error.stack);
+  // Don't exit - log and continue
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit - log and continue
+});
+
 server.listen(config.port, () => {
   console.log(`Debate stream server running on http://localhost:${config.port}`);
   console.log(`Using Groq API for debate generation`);
+  console.log(`Memory monitoring enabled (checks every 10 minutes)`);
+  console.log(`Global error handlers enabled for stability`);
   if (youtubeChatMonitor) {
     console.log('YouTube chat monitoring enabled');
     youtubeChatMonitor.start();
