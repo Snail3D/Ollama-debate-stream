@@ -112,14 +112,21 @@ export class YouTubeChatMonitor {
           console.log(`YouTube random request from ${username}: ${text}`);
           this.messageCallback(username, text);
         }
-        // Regular messages - accept "debate" with space, comma, or just the word
-        else if (text.toLowerCase().includes('debate')) {
-          // Find where "debate" starts and extract topic after it
+        // Regular messages - accept "debate" or common typos like "debat"
+        else if (text.toLowerCase().includes('debate') || text.toLowerCase().includes('debat')) {
+          // Find where "debate" or "debat" starts and extract topic after it
           const lowerText = text.toLowerCase();
-          const debateIndex = lowerText.indexOf('debate');
+          let debateIndex = lowerText.indexOf('debate');
+          let debateLength = 6; // "debate" is 6 chars
 
-          // Skip past "debate" and any following punctuation/spaces
-          let topicStart = debateIndex + 6; // "debate" is 6 chars
+          // If "debate" not found, try "debat" typo
+          if (debateIndex === -1) {
+            debateIndex = lowerText.indexOf('debat');
+            debateLength = 5; // "debat" is 5 chars
+          }
+
+          // Skip past "debate"/"debat" and any following punctuation/spaces
+          let topicStart = debateIndex + debateLength;
           const remainingText = text.substring(topicStart);
 
           // Skip commas, spaces, colons, etc. and strip brackets/parens that users might include
